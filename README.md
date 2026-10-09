@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <a href="releases/UpdateStatus_1.0.0.pext?raw=true"><strong>Download v1.0.0</strong></a> ·
+  <a href="https://github.com/AwaDensetsu/UpdateStatus/releases/download/v1.0.0/UpdateStatus_1.0.0.pext"><strong>Download v1.0.0</strong></a> ·
   <a href="#installation">Installation</a> ·
   <a href="#features">Features</a> ·
   <a href="#controls">Controls</a> ·
