@@ -1,0 +1,14 @@
+bin/
+artifacts/
+obj/
+tools/local.properties
+*.user
+tools/reference-assemblies/
+tools/binary-analysis/
+tools/__pycache__/
+tools/runtime-dependencies/iced-1.21.0/Iced.xml
+tools/runtime-dependencies/iced-1.21.0/*.nupkg
+tools/playnite-sdk/
+tools/development/
+
+/AGENTS.md
