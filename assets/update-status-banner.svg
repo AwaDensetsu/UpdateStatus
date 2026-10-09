@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="300" viewBox="0 0 1200 300" role="img" aria-labelledby="title description">
+  <title id="title">Update Status</title>
+  <desc id="description">A Playnite extension for game updates, download progress and launch controls. Desktop and Fullscreen. Steam support in version 1.0.0.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#111b2c"/>
+      <stop offset="1" stop-color="#080d16"/>
+    </linearGradient>
+    <radialGradient id="glow">
+      <stop stop-color="#2997a8" stop-opacity="0.17"/>
+      <stop offset="1" stop-color="#2997a8" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#26364c" stroke-width="0.6" opacity="0.25"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="300" rx="20" fill="url(#background)"/>
+  <rect width="1200" height="300" rx="20" fill="url(#grid)"/>
+  <ellipse cx="182" cy="150" rx="235" ry="185" fill="url(#glow)"/>
+  <g transform="translate(142 150)">
+    <circle r="85" fill="#0c1522" stroke="#304257" stroke-width="1"/>
+    <path d="M27 -58 A64 64 0 1 0 63 11" fill="none" stroke="#c4cbd4" stroke-width="12"/>
+    <path d="M64 -7 L45 19 L75 23 Z" fill="#c4cbd4"/>
+    <path d="M38 -51 L35 -55 M47 -43 L44 -47" stroke="#c4cbd4" stroke-width="12"/>
+    <path d="M0 -29 V20 M-18 3 L0 21 L18 3" fill="none" stroke="#73c8cc" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M-25 36 H25" stroke="#73c8cc" stroke-width="5" stroke-linecap="round"/>
+  </g>
+  <g font-family="Segoe UI, Arial, sans-serif">
+    <text x="270" y="71" fill="#73c8cc" font-size="14" font-weight="600" letter-spacing="3">PLAYNITE EXTENSION</text>
+    <text x="266" y="140" fill="#edf2f8" font-size="60" font-weight="700" letter-spacing="-1">Update Status</text>
+    <text x="270" y="183" fill="#a8b5c7" font-size="21">Game updates. Download progress. Launch controls.</text>
+    <g transform="translate(270 222)" font-size="14" font-weight="600">
+      <rect width="176" height="30" rx="15" fill="#152336" stroke="#314359"/>
+      <text x="88" y="20" fill="#cbd5e1" text-anchor="middle">Desktop + Fullscreen</text>
+      <rect x="188" width="92" height="30" rx="15" fill="#112c32" stroke="#27525b"/>
+      <text x="234" y="20" fill="#86d3d6" text-anchor="middle">Steam</text>
+      <rect x="292" width="78" height="30" rx="15" fill="#152336" stroke="#314359"/>
+      <text x="331" y="20" fill="#cbd5e1" text-anchor="middle">v1.0.0</text>
+    </g>
+  </g>
+  <g transform="translate(1030 74)" fill="none" stroke="#6a819c" opacity="0.22">
+    <circle cx="45" cy="0" r="3" fill="#6a819c"/>
+    <path d="M45 12 V138 M10 35 H80 M10 106 H80"/>
+    <circle cx="45" cy="154" r="3" fill="#6a819c"/>
+    <rect y="25" width="90" height="20" rx="10"/>
+    <rect y="96" width="90" height="20" rx="10"/>
+  </g>
+</svg>
