@@ -50,16 +50,16 @@ namespace PlayniteUpdateStatus.Launchers.Steam
             try
             {
                 string list = ids.Length == 0 ? "-" : string.Join(",",ids.Select(id => id.ToString(CultureInfo.InvariantCulture)));
-                var child = SteamHelperProcess.Create(helper,SteamLocator.QuoteRoot(root) + " --catalog " + list + " 86400 " + Process.GetCurrentProcess().Id);
+                var child = SteamHelperProcess.Create(helper,SteamLocator.QuoteRoot(root) + " --catalog-ui " + list + " 86400 " + Process.GetCurrentProcess().Id);
                 child.OutputDataReceived += (sender,e) => {
-                    if (e.Data == null || !(e.Data.StartsWith("Q1|",StringComparison.Ordinal) || e.Data.StartsWith("Q2|",StringComparison.Ordinal))) return;
+                    if (e.Data == null || !e.Data.StartsWith("Q3|",StringComparison.Ordinal)) return;
                     try {
                         var sample = SteamQueueSample.Parse(e.Data,ids);
                         lock (gate) {
                             if (disposed || process != child) return;
                             if (sample.Sequence <= lastSequence) { latest = null; Error("Replayed Steam catalog frame refused"); return; }
                             lastSequence = sample.Sequence;
-                            sample.ReceivedUtc = DateTime.UtcNow; latest = sample; notice = null;
+                            sample.ReceivedUtc = DateTime.UtcNow; latest = sample; notice = null; SteamUiAccess.ObserveConnection(root);
                         }
                     } catch (FormatException) { lock (gate) { if (!disposed && process == child) { latest = null; Error("Invalid Steam catalog frame refused"); } } }
                 };
@@ -67,8 +67,7 @@ namespace PlayniteUpdateStatus.Launchers.Steam
                     if (string.IsNullOrEmpty(e.Data)) return;
                     lock (gate) {
                         if (disposed || process != child) return;
-                        if (e.Data.Contains("NotSupportedException") || e.Data.Contains("Unverified") || e.Data.Contains("Unexpected "))
-                        { unsupported = true; notice = "Steam catalog unavailable for this client version"; }
+                        notice = "Download data unavailable — check local access in extension settings";
                         Error("Steam catalog: " + e.Data.Substring(0,Math.Min(500,e.Data.Length)));
                     }
                 };

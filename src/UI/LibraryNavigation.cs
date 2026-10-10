@@ -1,4 +1,3 @@
-using System;
 using Playnite.SDK;
 
 namespace PlayniteUpdateStatus.UI

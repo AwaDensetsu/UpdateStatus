@@ -1,7 +1,7 @@
 Id: PlayniteUpdateStatus_5adef35e-891f-4f08-870e-4f2b6a64f7e7
 Name: Update Status
 Author: Densetsu
-Version: 1.0.0
+Version: 1.1.0
 Module: PlayniteUpdateStatus.dll
 Type: GenericPlugin
 Description: Monitors Steam updates and the download queue, with progress, Pause/Resume and cover/list indicators across Desktop and Fullscreen themes.

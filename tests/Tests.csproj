@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsTestProject>true</IsTestProject>
+    <IsPackable>false</IsPackable>
+    <OutputType>Library</OutputType>
+    <AssemblyName>UpdateStatus.UnitTests</AssemblyName>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
+    <OutputPath>..\bin\UnitTests\</OutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" PrivateAssets="all" />
+    <PackageReference Include="NUnit" Version="4.4.0" PrivateAssets="all" />
+    <PackageReference Include="NUnit3TestAdapter" Version="5.0.0" PrivateAssets="all" />
+    <PackageReference Include="PlayniteSDK" Version="6.13.0" PrivateAssets="all" />
+    <Reference Include="WindowsBase" />
+    <ProjectReference Include="..\src\UpdateStatus.csproj" />
+    <Compile Include="Unit\**\*.cs" />
+    <Compile Include="Support\SteamSamples.cs" />
+  </ItemGroup>
+</Project>

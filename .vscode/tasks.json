@@ -1,0 +1,55 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build (Debug)",
+      "type": "process",
+      "command": "dotnet",
+      "args": [
+        "build",
+        "${workspaceFolder}/UpdateStatus.sln",
+        "--configuration",
+        "Debug"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "Build (Release)",
+      "type": "process",
+      "command": "dotnet",
+      "args": [
+        "build",
+        "${workspaceFolder}/UpdateStatus.sln",
+        "--configuration",
+        "Release"
+      ],
+      "group": "build",
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "Package extension",
+      "type": "process",
+      "command": "dotnet",
+      "args": [
+        "msbuild",
+        "${workspaceFolder}/src/UpdateStatus.csproj",
+        "-restore",
+        "-target:PackageExtension",
+        "-property:Configuration=Release",
+        "-property:PlayniteDir=${input:playniteDirectory}"
+      ],
+      "problemMatcher": "$msCompile"
+    }
+  ],
+  "inputs": [
+    {
+      "id": "playniteDirectory",
+      "type": "promptString",
+      "description": "Playnite installation folder containing Toolbox.exe"
+    }
+  ]
+}

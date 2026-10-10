@@ -5,13 +5,14 @@ using System.IO;
 
 namespace PlayniteUpdateStatus.Launchers.Steam
 {
-    // Private Steam DLL code only runs in our x64 helper, never in the Playnite process.
+    // Steam UI connections run in the helper; the Playnite process receives validated snapshots.
     public sealed class SteamLiveReader : IDisposable
     {
         private readonly object gate = new object();
         private readonly uint appId;
         private readonly Action<string, bool> log;
         private readonly string root;
+        private readonly Func<string, string, Process> createProcess;
         private Process process;
         private SteamLiveSample latest;
         private DateTime receivedAt, attemptedAt = DateTime.MinValue;
@@ -20,7 +21,12 @@ namespace PlayniteUpdateStatus.Launchers.Steam
         private string availabilityNotice;
         public string AvailabilityNotice { get { lock (gate) return availabilityNotice; } }
         public SteamLiveReader(string root, uint appId, Action<string, bool> log)
-        { this.root = root; this.appId = appId; this.log = log; }
+            : this(root, appId, log, SteamHelperProcess.Create) { }
+        internal SteamLiveReader(string root, uint appId, Action<string, bool> log, Func<string, string, Process> createProcess)
+        {
+            this.root = root; this.appId = appId; this.log = log;
+            this.createProcess = createProcess ?? throw new ArgumentNullException(nameof(createProcess));
+        }
         public SteamLiveSample TryRead()
         {
             lock (gate)
@@ -42,15 +48,15 @@ namespace PlayniteUpdateStatus.Launchers.Steam
             if (!File.Exists(helper)) { permanentlyUnavailable = true; availabilityNotice = "Live progress unavailable — reinstall this extension"; Error("Live helper missing; using manifest/unknown fallback"); return; }
             try
             {
-                var child = SteamHelperProcess.Create(helper,
+                var child = createProcess(helper,
                     SteamLocator.QuoteRoot(root) + " " + appId.ToString(CultureInfo.InvariantCulture) + " 86400 --protocol " + Process.GetCurrentProcess().Id.ToString(CultureInfo.InvariantCulture));
                 child.OutputDataReceived += (s, e) =>
                 {
-                    if (e.Data == null || !e.Data.StartsWith("S3|", StringComparison.Ordinal)) return;
+                    if (e.Data == null || !e.Data.StartsWith("S4|", StringComparison.Ordinal)) return;
                     try
                     {
                         var sample = SteamLiveSample.Parse(e.Data, appId);
-                        lock (gate) { if (disposed || process != child) return; sample.ReceivedAtUtc = receivedAt = DateTime.UtcNow; latest = sample; availabilityNotice = null; }
+                        lock (gate) { if (disposed || process != child) return; sample.ReceivedAtUtc = receivedAt = DateTime.UtcNow; latest = sample; availabilityNotice = null; SteamUiAccess.ObserveConnection(root); }
                     }
                     catch (FormatException) { lock (gate) { if (!disposed && process == child) { latest = null; Error("Invalid live reader frame; numeric progress suppressed"); } } }
                 };
@@ -60,7 +66,7 @@ namespace PlayniteUpdateStatus.Launchers.Steam
                     lock (gate)
                     {
                         if (disposed || process != child) return;
-                        if (e.Data.Contains("Unverified Steam client ABI") || e.Data.Contains("Unexpected ") || e.Data.Contains("NotSupportedException")) { permanentlyUnavailable = true; availabilityNotice = "Live progress unavailable for this client version — check for a plugin update"; }
+                        availabilityNotice = "Live progress unavailable — check local access in extension settings";
                         Error("Steam reader: " + e.Data.Substring(0, Math.Min(e.Data.Length, 500)));
                     }
                 };
@@ -69,9 +75,9 @@ namespace PlayniteUpdateStatus.Launchers.Steam
                 child.Start(); child.BeginOutputReadLine(); child.BeginErrorReadLine();
                 child.EnableRaisingEvents = true;
                 if (child.HasExited) { process = null; child.Dispose(); }
-                log("Started isolated live Steam reader for AppID " + appId, false);
+                log("Started Steam UI reader for AppID " + appId, false);
             }
-            catch (Exception e) { if (process != null) { process.Dispose(); process = null; } Error("Live reader could not start: " + e.Message); }
+            catch (Exception e) { StopChild(); latest = null; Error("Live reader could not start: " + e.Message); }
         }
         private void Error(string message) { if (lastError != message) { lastError = message; log(message, false); } }
         public void Dispose()

@@ -34,12 +34,12 @@ namespace PlayniteUpdateStatus.Core
         }
         public string GetMetricsText(SpeedUnit unit)
         {
-                if (!string.IsNullOrEmpty(Notice)) return Notice;
-                if (WaitingForData) return "Waiting for update data…";
-                if (Paused) return "Download paused";
-                string speed = BytesPerSecond.HasValue ? FormatSpeed(BytesPerSecond.Value,unit) : string.Empty;
-                string time = SecondsRemaining.HasValue && SecondsRemaining > 0 ? "Estimated " + Duration(SecondsRemaining.Value) + " remaining" : string.Empty;
-                return speed.Length > 0 && time.Length > 0 ? speed + " · " + time : speed + time;
+            if (!string.IsNullOrEmpty(Notice)) return Notice;
+            if (WaitingForData) return "Waiting for update data…";
+            if (Paused) return "Download paused";
+            string speed = BytesPerSecond.HasValue ? FormatSpeed(BytesPerSecond.Value, unit) : string.Empty;
+            string time = SecondsRemaining.HasValue && SecondsRemaining > 0 ? "Estimated " + Duration(SecondsRemaining.Value) + " remaining" : string.Empty;
+            return speed.Length > 0 && time.Length > 0 ? speed + " · " + time : speed + time;
         }
         public static string FormatSpeed(double bytesPerSecond, SpeedUnit unit)
         {
@@ -49,8 +49,8 @@ namespace PlayniteUpdateStatus.Core
             decimal scale = bits ? 1000 : 1024;
             string[] units = bits ? new[] { "kbps", "Mbps", "Gbps", "Tbps", "Pbps", "Ebps" } : new[] { "KB/s", "MB/s", "GB/s", "TB/s", "PB/s", "EB/s" };
             value /= scale; int index = 0;
-            while (value >= scale && index < units.Length-1) { value /= scale; index++; }
-            return value.ToString("0.0",CultureInfo.CurrentCulture) + " " + units[index];
+            while (value >= scale && index < units.Length - 1) { value /= scale; index++; }
+            return value.ToString("0.0", CultureInfo.CurrentCulture) + " " + units[index];
         }
         private static string Duration(int seconds)
         {
@@ -78,6 +78,8 @@ namespace PlayniteUpdateStatus.Core
 
     public sealed class UpdateObservation
     {
+        // Receipt of authoritative provider state; counters may be absent.
+        public DateTime? ReceivedAtUtc { get; set; }
         public bool? CloseConfirmed { get; set; }
         public bool? ControlPaused { get; set; }
         public string ControlScope { get; set; }
@@ -88,6 +90,8 @@ namespace PlayniteUpdateStatus.Core
         public UpdateDisplay Display { get; set; }
         public bool CompletionPending { get; set; }
         public string Detail { get; set; }
+        public string UserMessage { get; set; }
+        public bool CancelPendingPlay { get; set; }
     }
 
     public sealed class UpdateState
@@ -108,6 +112,8 @@ namespace PlayniteUpdateStatus.Core
         public int? Percent { get; set; }
         public UpdateDisplay Display { get; set; }
         public string Detail { get; set; }
+        public string UserMessage { get; set; }
+        public bool CancelPendingPlay { get; set; }
         public string Text
         {
             get
@@ -116,7 +122,7 @@ namespace PlayniteUpdateStatus.Core
                     return Display == null ? "Updating…" : (Display.DownloadText.Length == 0 ? Display.StageText : Display.DownloadText + Environment.NewLine + Display.StageText);
                 if (Phase == UpdatePhase.Ready) return "Update complete — 100%";
                 if (Phase == UpdatePhase.Launching) return "Launching…";
-                if (Phase == UpdatePhase.Error) return "Game update interrupted — check the launcher";
+                if (Phase == UpdatePhase.Error) return UserMessage ?? "Game update interrupted — check the launcher";
                 return string.Empty;
             }
         }

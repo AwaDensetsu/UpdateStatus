@@ -31,8 +31,8 @@ namespace PlayniteUpdateStatus.Launchers.Steam
         {
             if (line == null || line.Length > 65536) throw new FormatException("Invalid Steam catalog frame length");
             var fields = line.Split('|');
-            bool progressProtocol = fields.Length == 7 && fields[0] == "Q2";
-            if (!progressProtocol && (fields.Length != 6 || fields[0] != "Q1")) throw new FormatException("Invalid Steam catalog protocol");
+            bool progressProtocol = fields.Length == 7 && fields[0] == "Q3";
+            if (!progressProtocol) throw new FormatException("Invalid Steam catalog protocol");
             var sample = new SteamQueueSample();
             bool unknown = fields[1] == "-";
             if (unknown) { if (fields[2] != "-" || fields[3] != "-") throw new FormatException("Inconsistent catalog globals"); }
@@ -75,7 +75,7 @@ namespace PlayniteUpdateStatus.Launchers.Steam
                     var parts = fields[6].Split(':');
                     if (parts.Length == 3)
                     {
-                        var live = SteamLiveSample.Parse("S3|" + parts[0] + "|" + parts[1] + "|" + parts[2],sample.ActiveAppId.Value);
+                        var live = SteamLiveSample.Parse("S4|" + parts[0] + "|" + parts[1] + "|" + parts[2],sample.ActiveAppId.Value);
                         var row = items.FirstOrDefault(item => item.AppId == live.AppId);
                         if (live.HasCounters && row != null && row.Flags == live.InstallState && live.DownloadsEnabled == sample.DownloadsEnabled &&
                             SteamSelectionPolicy.Known(live.InstallState) && (live.InstallState & 8192) == 0)

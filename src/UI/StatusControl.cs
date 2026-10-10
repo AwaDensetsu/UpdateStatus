@@ -124,7 +124,7 @@ namespace PlayniteUpdateStatus.UI
             actionButton.Content = state.CommandPending ? "Please wait…" : state.CanResume ? "Resume" : "Pause";
             actionButton.ToolTip = null;
             closeButton.Visibility = showControls && visible ? Visibility.Visible : Visibility.Collapsed;
-            closeButton.IsEnabled = visible && !state.CommandPending;
+            closeButton.IsEnabled = visible && monitor.ControlsEnabled && !state.CommandPending;
             AutomationProperties.SetName(closeButton,"Pause downloads and return to library");
             actionButton.Visibility = commands ? Visibility.Visible : Visibility.Collapsed;
             actionButton.IsEnabled = commands && !state.CommandPending;

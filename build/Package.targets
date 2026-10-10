@@ -1,0 +1,37 @@
+<Project>
+  <Target Name="ValidatePackageEnvironment">
+    <Error Condition="'$(Configuration)' != 'Release'" Text="PackageExtension requires Configuration=Release." />
+    <Error Condition="'$(PlayniteDir)' == '' or !Exists('$(PlayniteDir)\Toolbox.exe')" Text="Set PlayniteDir to the Playnite installation folder containing Toolbox.exe." />
+  </Target>
+
+  <Target Name="PackageExtension" DependsOnTargets="ValidatePackageEnvironment;Build">
+    <PropertyGroup>
+      <PackageOutputDirectory>$(MSBuildProjectDirectory)\..\artifacts\testing</PackageOutputDirectory>
+      <PackageStagingDirectory>$([System.IO.Path]::GetTempPath())UpdateStatus-$([System.Guid]::NewGuid().ToString('N'))</PackageStagingDirectory>
+      <PackageVersionSuffix>$(Version.Replace('.', '_'))</PackageVersionSuffix>
+      <ExtensionPackagePath>$(PackageOutputDirectory)\UpdateStatus_$(Version).pext</ExtensionPackagePath>
+    </PropertyGroup>
+    <ItemGroup>
+      <ExtensionPackageFiles Include="$(TargetPath)" />
+      <ExtensionPackageFiles Include="$(TargetDir)SteamUpdateReader.exe" />
+      <ExtensionPackageFiles Include="$(TargetDir)SteamUpdateReader.exe.config" />
+      <ExtensionPackageFiles Include="$(MSBuildProjectDirectory)\extension.yaml" />
+      <ExtensionPackageFiles Include="$(MSBuildProjectDirectory)\..\LICENSE" />
+    </ItemGroup>
+    <MakeDir Directories="$(PackageOutputDirectory);$(PackageStagingDirectory)\files;$(PackageStagingDirectory)\packed" />
+    <Copy SourceFiles="@(ExtensionPackageFiles)" DestinationFolder="$(PackageStagingDirectory)\files" />
+    <Exec Command="&quot;$(PlayniteDir)\Toolbox.exe&quot; pack &quot;$(PackageStagingDirectory)\files&quot; &quot;$(PackageStagingDirectory)\packed&quot;" />
+    <ItemGroup>
+      <ToolboxPackage Include="$(PackageStagingDirectory)\packed\*_$(PackageVersionSuffix).pext" />
+    </ItemGroup>
+    <Error Condition="'@(ToolboxPackage->Count())' != '1'" Text="Expected one installer matching Version=$(Version). Check the version in extension.yaml." />
+    <Copy SourceFiles="@(ToolboxPackage)" DestinationFiles="$(ExtensionPackagePath)" />
+    <RemoveDir Directories="$(PackageStagingDirectory)" />
+    <Message Text="Testing installer: $(ExtensionPackagePath)" Importance="high" />
+    <OnError ExecuteTargets="CleanPackageStagingDirectory" />
+  </Target>
+
+  <Target Name="CleanPackageStagingDirectory">
+    <RemoveDir Directories="$(PackageStagingDirectory)" Condition="'$(PackageStagingDirectory)' != '' and Exists('$(PackageStagingDirectory)')" />
+  </Target>
+</Project>

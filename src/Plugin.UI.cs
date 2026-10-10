@@ -8,6 +8,14 @@ namespace PlayniteUpdateStatus
 {
     public sealed partial class Plugin
     {
+        private void StartStatusUI()
+        {
+            PlayniteApi.MainView.UIDispatcher.BeginInvoke(new Action(() =>
+            {
+                if (!closing && !stopped && Monitor.Current.Visible) uiTimer.Start();
+            }));
+        }
+
         private void StopStatusUI()
         {
             uiTimer.Stop();
@@ -17,40 +25,18 @@ namespace PlayniteUpdateStatus
         private void StateChanged(UpdateState state)
         {
             if (closing || stopped) return;
-            if (!state.Visible) lock (selectionGate) { if (pausedLaunch != null) { pausedLaunch.ResumeConfirmed = false; pausedLaunch = null; } }
-            if (CanRetainResumedPlay(state)) RestartPausedLaunch();
-            var recovery = steamRecovery;
-            if (recovery != null && (!state.Visible || state.SessionId == recoverySession)) recovery.Observe(state,DateTime.UtcNow);
             var dispatcher = PlayniteApi.MainView.UIDispatcher;
             if (dispatcher.HasShutdownStarted || stopped) return;
             dispatcher.BeginInvoke(new Action(() =>
             {
                 if (closing || stopped || state.Revision != Monitor.Current.Revision) return;
-                if (closing || stopped) return;
-                if (!state.Visible) { StopStatusUI(); activeGame = null; activeLauncher = null; observedUpdate = false; foregroundPolicy.Reset(); Log("Observer and status controls cleared", false); }
+                if (!state.Visible) { StopStatusUI(); launchCoordinator.ClearObservation(); foregroundPolicy.Reset(); Log("Observer and status controls cleared", false); }
                 else if (state.Dismissed)
                 {
                     StopStatusUI(); foregroundPolicy.Reset();
-                    if (returnedToLibrarySession != state.SessionId)
-                    {
-                        returnedToLibrarySession = state.SessionId;
-                        bool held, navigate;
-                        lock (selectionGate) {
-                            held = heldSessions.Remove(state.SessionId); navigate = !held;
-                            if (held) {
-                                closedHeldSessions.Add(state.SessionId);
-                                if (sdkCancelledSessions.Remove(state.SessionId)) { closedHeldSessions.Remove(state.SessionId); navigate = true; }
-                            }
-                        }
-                        // The held callback returns CancelStartup=true. Playnite
-                        // performs its own controller/UI cleanup and acknowledges
-                        // it through OnGameStartupCancelled; no private core call.
-                        if (Monitor.Current.SessionId == state.SessionId) Monitor.Stop(state.GameId);
-                        if (!held) Log("Closed update observer; forwarded launch remains owned by its launcher and Playnite",false);
-                        if (navigate) ReturnToLibrary(state.SessionId);
-                    }
+                    launchCoordinator.Dismiss(state);
                 }
-                else { returnedToLibrarySession = -1; uiTimer.Start(); RefreshUI(); }
+                else { launchCoordinator.ResetLibraryReturn(); uiTimer.Start(); RefreshUI(); }
             }));
         }
         private void RefreshUI()
@@ -59,19 +45,18 @@ namespace PlayniteUpdateStatus
             try
             {
                 var state = Monitor.Current;
-                if (!state.Visible || activeGame == null || activeGame.IsRunning) { StopStatusUI(); return; }
+                if (!state.Visible || launchCoordinator.ActiveGame == null || launchCoordinator.ActiveGame.IsRunning) { StopStatusUI(); return; }
                 if (state.Dismissed) { StopStatusUI(); foregroundPolicy.Reset(); return; }
-                var recovery = steamRecovery;
-                if (recovery != null && state.SessionId == recoverySession) recovery.Poll(DateTime.UtcNow);
+                launchCoordinator.PollRecovery(DateTime.UtcNow);
                 var window = Application.Current == null ? null : Application.Current.MainWindow;
                 if (window == null) return;
                 bool fullscreen = PlayniteApi.ApplicationInfo.Mode == ApplicationMode.Fullscreen;
-                if (state.Phase == UpdatePhase.Updating || state.Phase == UpdatePhase.Ready) observedUpdate = true;
+                if (state.Phase == UpdatePhase.Updating || state.Phase == UpdatePhase.Ready) launchCoordinator.MarkUpdateObserved();
                 Window target = window;
                 if (Settings.AutomaticOverlay)
                 {
-                    target = FindLaunchWindow(window,state.GameId);
-                    if ((observedUpdate || state.Phase == UpdatePhase.Error) && !HasIntegratedControl(target,state)) universal.Refresh(target,state,fullscreen);
+                    target = FindLaunchWindow(window, state.GameId);
+                    if ((launchCoordinator.ObservedUpdate || state.Phase == UpdatePhase.Error) && !HasIntegratedControl(target, state)) universal.Refresh(target, state, fullscreen);
                     else universal.Dispose();
                 }
                 else
@@ -80,9 +65,9 @@ namespace PlayniteUpdateStatus
                 }
                 if (Settings.KeepFrontendVisible)
                 {
-                    var launcher = activeLauncher;
-                    string result = launcher == null ? null : FrontendVisibility.RestoreForLauncher(target,state,foregroundPolicy,launcher.Registration.ClientProcesses,
-                        () => activeGame != null && activeGame.IsRunning || launcher.Registration.IsGameRunning != null && launcher.Registration.IsGameRunning(launcher.Identity));
+                    var launcher = launchCoordinator.ActiveLauncher;
+                    string result = launcher == null ? null : FrontendVisibility.RestoreForLauncher(target, state, foregroundPolicy, launcher.Registration.ClientProcesses,
+                        () => launchCoordinator.ActiveGame != null && launchCoordinator.ActiveGame.IsRunning || launcher.Registration.IsGameRunning != null && launcher.Registration.IsGameRunning(launcher.Identity));
                     if (result != null && result != foregroundResult) { foregroundResult = result; Log(result, false); }
                 }
                 else foregroundPolicy.Reset();
@@ -92,7 +77,7 @@ namespace PlayniteUpdateStatus
         private bool HasIntegratedControl(Window window, UpdateState state)
         {
             bool found = false;
-            for (int i = themeControls.Count-1; i >= 0; i--)
+            for (int i = themeControls.Count - 1; i >= 0; i--)
             {
                 var control = themeControls[i].Target as StatusControl;
                 if (control == null) { themeControls.RemoveAt(i); continue; }
@@ -108,10 +93,10 @@ namespace PlayniteUpdateStatus
             {
                 if (window == main || !window.IsVisible) continue;
                 string name = window.GetType().Name;
-                if (name.IndexOf("Launch",StringComparison.OrdinalIgnoreCase) < 0 && name.IndexOf("GameStatus",StringComparison.OrdinalIgnoreCase) < 0) continue;
+                if (name.IndexOf("Launch", StringComparison.OrdinalIgnoreCase) < 0 && name.IndexOf("GameStatus", StringComparison.OrdinalIgnoreCase) < 0) continue;
                 var property = window.GetType().GetProperty("GameId");
                 if (property == null) continue;
-                try { if (gameId.Equals(property.GetValue(window,null))) return window; }
+                try { if (gameId.Equals(property.GetValue(window, null))) return window; }
                 catch (System.Reflection.TargetInvocationException) { }
             }
             return main;

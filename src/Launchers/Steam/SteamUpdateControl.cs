@@ -15,42 +15,42 @@ namespace PlayniteUpdateStatus.Launchers.Steam
         private bool disposed;
         public bool Supported { get; private set; }
         public static bool SupportsSelection(string root)
-        { return SteamAbiResolver.SupportsControl(root); }
+        { return SteamUiAccess.CanConnect(root); }
         public SteamUpdateControl(string root, uint appId, Action<string,bool> log)
         {
             this.root = root; this.appId = appId; this.log = log;
-            Supported = SteamAbiResolver.SupportsControl(root);
+            Supported = SteamUiAccess.CanConnect(root);
         }
         public bool Send(UpdateCommand command)
         {
             if (command != UpdateCommand.Pause && command != UpdateCommand.Resume) return false;
             string action = command == UpdateCommand.Pause ? "pause" : "resume";
-            string reply = Execute("--downloads-command " + action,"C2|");
-            bool accepted = reply == "C2|" + appId + "|" + action + "|accepted" || reply == "C2|" + appId + "|" + action + "|already";
+            string reply = Execute("--ui-downloads-command " + action,"U1|");
+            bool accepted = reply == "U1|" + appId + "|" + action + "|accepted" || reply == "U1|" + appId + "|" + action + "|already";
             log("Steam downloads " + action + " (all downloads; observed AppID=" + appId + "): " + (accepted ? "accepted; waiting for live confirmation" : "not accepted"),false);
             return accepted;
         }
         public SteamSelectionResult Select()
         {
-            string reply = Execute("--select-update","C4|");
-            if (reply == "C4|" + appId + "|select|accepted" || reply == "C4|" + appId + "|select|already") return SteamSelectionResult.Accepted;
-            if (reply == "C4|" + appId + "|select|finished") return SteamSelectionResult.Finished;
-            if (reply == "C4|" + appId + "|select|waiting") return SteamSelectionResult.Waiting;
+            string reply = Execute("--ui-select-update","U2|");
+            if (reply == "U2|" + appId + "|select|accepted" || reply == "U2|" + appId + "|select|already") return SteamSelectionResult.Accepted;
+            if (reply == "U2|" + appId + "|select|finished") return SteamSelectionResult.Finished;
+            if (reply == "U2|" + appId + "|select|waiting") return SteamSelectionResult.Waiting;
             return SteamSelectionResult.Rejected;
         }
         public bool SendSelected(UpdateCommand command)
         {
             if (command != UpdateCommand.Pause && command != UpdateCommand.Resume) return false;
             string action = command == UpdateCommand.Pause ? "pause" : "resume";
-            string reply = Execute("--selected-downloads-command " + action,"C5|");
-            bool accepted = reply == "C5|" + appId + "|" + action + "|accepted" || reply == "C5|" + appId + "|" + action + "|already";
+            string reply = Execute("--ui-selected-downloads-command " + action,"U1|");
+            bool accepted = reply == "U1|" + appId + "|" + action + "|accepted" || reply == "U1|" + appId + "|" + action + "|already";
             log("Selected Steam downloads " + action + " AppID=" + appId + ": " + (accepted ? "accepted; waiting for global confirmation" : "not accepted"),false);
             return accepted;
         }
         public bool CloseUpdate()
         {
-            string reply = Execute("--close-update","C6|");
-            bool accepted = reply == "C6|" + appId + "|close|accepted" || reply == "C6|" + appId + "|close|already";
+            string reply = Execute("--ui-close-update","U3|");
+            bool accepted = reply == "U3|" + appId + "|close|accepted" || reply == "U3|" + appId + "|close|already";
             log("Steam close update AppID=" + appId + ": " + (accepted ? "accepted; waiting for pause and queue removal" : "not accepted"),false);
             return accepted;
         }
@@ -69,7 +69,7 @@ namespace PlayniteUpdateStatus.Launchers.Steam
             }
             try
             {
-                // Drain both streams asynchronously; native loader diagnostics must not block.
+                // Drain both streams asynchronously; connection errors must not block.
                 string reply = null;
                 process.OutputDataReceived += (s,e) => { if (e.Data != null && e.Data.StartsWith(protocol,StringComparison.Ordinal)) reply = e.Data; };
                 process.ErrorDataReceived += (s,e) => { if (!string.IsNullOrEmpty(e.Data)) log("Steam control: " + e.Data.Substring(0,Math.Min(500,e.Data.Length)),false); };

@@ -3,29 +3,25 @@ using PlayniteUpdateStatus.Core;
 
 namespace PlayniteUpdateStatus.Launchers.Steam
 {
-    public sealed class SteamStageProgress
-    {
-        public ulong Done, Total;
-        public float Weight;
-    }
-
     public static class SteamLivePresentation
     {
-        // Stage and weighted work presentation follow the reviewed Steam contract.
-        // SteamAbiResolver validates that contract before native data is read.
-        public static UpdateDisplay Build(SteamLiveSample sample)
+        // Work percentage comes directly from Steam UI; downloaded bytes have their own percentage.
+        public static UpdateDisplay Build(SteamLiveSample sample, string previousStage = null)
         {
             bool knownState = (sample.UpdateState & ~2047u) == 0;
-            bool paused = sample.Result == 2 || sample.Result == 4 || (sample.InstallState & 512) != 0;
+            bool paused = sample.Result == 2 || sample.Result == 4 || (sample.InstallState & 512) != 0 ||
+                sample.DownloadsEnabled == false && (sample.InstallState & SteamManifest.UpdateMask) != 0;
+            string stage = paused ? "Paused" : Stage(sample.UpdateState, sample.InstallState);
+            if (!sample.HasCounters && !paused && previousStage != null && previousStage != "Paused") stage = previousStage;
             return new UpdateDisplay {
                 Downloaded = sample.HasCounters && knownState ? (ulong?)sample.Downloaded : null,
                 DownloadTotal = sample.HasCounters && knownState ? (ulong?)sample.DownloadTotal : null,
                 DownloadPercent = sample.HasCounters && knownState ? Ratio(sample.Downloaded, sample.DownloadTotal) : null,
-                Stage = paused ? "Paused" : Stage(sample.UpdateState, sample.InstallState),
+                Stage = stage,
                 Paused = paused,
                 WaitingForData = !sample.HasCounters || !knownState,
                 SecondsRemaining = sample.HasCounters && knownState && !paused && (sample.UpdateState & 1) != 0 && sample.SecondsRemaining > 0 ? (int?)sample.SecondsRemaining : null,
-                WorkPercent = sample.HasCounters && knownState && ((sample.UpdateState & 1) != 0 || paused) ? WorkPercent(sample.Progress) : null
+                WorkPercent = sample.HasCounters && knownState && ((sample.UpdateState & 1) != 0 || paused) ? sample.UiWorkPercent : null
             };
         }
         public static string Stage(uint state, uint installState)
@@ -50,31 +46,6 @@ namespace PlayniteUpdateStatus.Launchers.Steam
         {
             if (total == 0 || done > total) return null;
             return Math.Max(done > 0 ? 1 : 0, Math.Min(100, (int)decimal.Floor((decimal)done * 100 / total)));
-        }
-        public static int? WorkPercent(SteamStageProgress[] stages)
-        {
-            if (stages == null || stages.Length != 7) return null;
-            // Steam runs download/staging concurrently. It excludes the one with
-            // the smaller byte total (download on ties) from BOTH weighted sums.
-            int excluded = stages[2].Total <= stages[3].Total ? 2 : 3;
-            decimal done = 0, total = 0;
-            try
-            {
-                for (int i = 0; i < 7; i++)
-                {
-                    var s = stages[i];
-                    if (s == null || s.Done > s.Total || float.IsNaN(s.Weight) || float.IsInfinity(s.Weight) || s.Weight < 0) return null;
-                    if (i == excluded) continue;
-                    // Match Steam's single-precision product then unsigned integer
-                    // truncation per stage, rather than inventing equal weights.
-                    float d = (float)s.Done * s.Weight, t = (float)s.Total * s.Weight;
-                    if (float.IsInfinity(d) || float.IsInfinity(t) || t >= 18446744073709551616f) return null;
-                    done += (ulong)d; total += (ulong)t;
-                }
-                if (total == 0 || done > total) return null;
-                return Math.Max(done > 0 ? 1 : 0, Math.Min(100, (int)decimal.Floor(done * 100 / total)));
-            }
-            catch (OverflowException) { return null; }
         }
     }
 }

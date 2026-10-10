@@ -1,4 +1,3 @@
-using System;
 using PlayniteUpdateStatus.Core;
 
 namespace PlayniteUpdateStatus.Launchers.Steam
