@@ -142,4 +142,6 @@ Licensed under the [MIT License](LICENSE).
 
 ## Credits
 
+I originally made Update Status for my own use and decided to share it in case others find it useful. I'm still learning to code, so feedback, bug reports and suggestions are welcome.
+
 The code was developed with assistance from **OpenAI Codex**.
