@@ -6,6 +6,7 @@
   <a href="https://github.com/AwaDensetsu/UpdateStatus/releases/download/v1.2.0/UpdateStatus_1.2.0.pext"><strong>Download v1.2.0</strong></a> ·
   <a href="#installation">Installation</a> ·
   <a href="#features">Features</a> ·
+  <a href="#screenshots">Screenshots</a> ·
   <a href="#settings">Settings</a> ·
   <a href="CHANGELOG.md">Changelog</a>
 </p>
@@ -41,6 +42,41 @@ Cover percentages show **downloaded data**. Once downloading finishes, the indic
 **Epic percentages, speed, file stages and Pause/Resume/Cancel are not available in this beta.** Downloads and game launches stay under Epic's control. The status card's × hides the card; it does not cancel the download. See [Epic beta details](BETA.md).
 
 The plugin supports Playnite's Desktop and Fullscreen modes. Indicator placement can vary with custom themes.
+
+## Screenshots
+
+### Steam update progress
+
+Separate download and file progress, with Pause/Resume controls. Appearance follows your Playnite theme.
+
+<p align="center">
+  <img src="assets/screenshots/download-controls.png" alt="Real Steam update cards showing download and file progress, Pause and Resume" width="1032">
+</p>
+
+### Cover indicators
+
+The same game cover with Update Required, Downloading and Paused indicators.
+
+<p align="center">
+  <img src="assets/screenshots/cover-states.png" alt="The same Steam game cover showing Update Required, Downloading and Paused" width="726">
+</p>
+
+<details>
+<summary><strong>Settings: General, Steam and Epic</strong></summary>
+
+**General**
+
+<img src="assets/screenshots/settings-general.png" alt="General settings for speed units, status cards and library indicators" width="592">
+
+**Steam**
+
+<img src="assets/screenshots/settings-steam.png" alt="Verified Steam connection, polling and Playnite shutdown options" width="592">
+
+**Epic Games — beta**
+
+<img src="assets/screenshots/settings-epic.png" alt="Optional Epic beta observation, connection setup and limitations" width="592">
+
+</details>
 
 ## Installation
 
