@@ -1,144 +1,136 @@
 <p align="center">
-  <img src="assets/update-status-banner.svg" alt="Update Status — game updates and download controls for Playnite" width="1200">
+  <img src="assets/update-status-banner.svg" alt="Update Status — Steam updates and experimental Epic observation for Playnite" width="1200">
 </p>
 
 <p align="center">
-  <a href="https://github.com/AwaDensetsu/UpdateStatus/releases/latest"><strong>Download</strong></a> ·
+  <a href="https://github.com/AwaDensetsu/UpdateStatus/releases/download/v1.2.0/UpdateStatus_1.2.0.pext"><strong>Download v1.2.0</strong></a> ·
   <a href="#installation">Installation</a> ·
   <a href="#features">Features</a> ·
-  <a href="#controls">Controls</a> ·
   <a href="#settings">Settings</a> ·
-  <a href="#future-plans">Future plans</a> ·
   <a href="CHANGELOG.md">Changelog</a>
 </p>
 
 ---
 
-Update Status shows which games need an update and what is happening while they update. Follow downloads from your library, pause or resume them, and let the selected game start when its update finishes.
+Update Status is a Playnite plugin that shows Steam update progress in your library, adds Pause/Resume controls and lets the selected game launch after its update finishes. It also includes experimental update observation for the Epic Games Launcher.
 
-**Upgrading from 1.0.0?** Version 1.1.0 uses a new Steam UI connection for live progress and controls. After installing, open the plugin settings and check **Connected**. If setup is needed, follow the [first-time setup instructions](#first-time-setup).
+I originally made this for my own library and decided to share it. Feedback and bug reports are welcome.
+
+> **Epic observation is optional and experimental.** It is off by default on new installations. Existing saved choices are preserved. Steam has been tested in real Playnite use; validation with a genuine Epic game update is still pending.
 
 ## Features
 
-- **Live progress:** downloaded size, total size, download speed and estimated time remaining.
-- **Separate progress bars:** downloading data and updating files are displayed separately.
-- **Library indicators:** Update Required, Downloading, Paused and processing stages on recognizable covers and game lists.
-- **Download controls:** Pause, Resume and a close button inside Playnite.
-- **Launch after updating:** wait for the selected game's required update, then continue its normal Playnite launch.
-- **Background monitoring:** show active download progress even when the update started before Playnite opened.
-- **Remembered updates:** keep confirmed Update Required indicators between restarts until fresh data confirms completion.
-- **Automatic setup:** find and remember the Steam installation folder on each PC.
+### Steam
+
+- Download size, speed and estimated time remaining.
+- Separate progress bars for downloading and updating files.
+- Update indicators on recognizable covers and game lists.
+- Pause, Resume and queue removal from Playnite.
+- Launch the selected game when its required update finishes.
+- Observe updates that started before Playnite opened.
+- Remember confirmed update requirements between Playnite restarts.
+
+Cover percentages show **downloaded data**. Once downloading finishes, the indicator shows the current processing stage. File work remains a separate bar in the detailed card.
+
+### Epic Games — beta
+
+- Experimental observation of update requirements and active update activity.
+- Cover/list indicators and a selected-game status card.
+- A separate connection/settings page for the stock Epic Games Launcher.
+
+**Epic percentages, speed, file stages and Pause/Resume/Cancel are not available in this beta.** Downloads and game launches stay under Epic's control. The status card's × hides the card; it does not cancel the download. See [Epic beta details](BETA.md).
+
+The plugin supports Playnite's Desktop and Fullscreen modes. Indicator placement can vary with custom themes.
 
 ## Installation
 
-1. Download the `.pext` installer from the latest release using the link above.
-2. Open Playnite in **Desktop mode**.
-3. Drag the `.pext` file into the Playnite window, confirm installation and restart Playnite when prompted.
-4. Open **Main menu → Add-ons → Extension settings → Generic → Update Status** to configure the plugin.
+1. Download the `.pext` installer using the download link above.
+2. Open Playnite in Desktop mode and drag the file into the window.
+3. Confirm installation and restart Playnite when prompted.
+4. Open **Main menu → Add-ons → Extension settings → Generic → Update Status**.
 
-Steam games must be added through Playnite's Steam library integration.
+Use games imported through Playnite's official Steam or Epic library integration.
 
-## First-time setup
+### Connect a launcher
 
-Open the plugin settings and check the Steam folder. **Steam found automatically** means the installation folder was detected. If it was not found, use **Browse** to select the installation folder containing `steam.exe` and `steamclient64.dll`.
+1. Open the **Steam** settings tab. For Epic, open **Epic** and turn on **Enable Epic observation (beta)** first. Check the detected installation folder; use **Change** or **Browse** if needed.
+2. If the card says **Not configured**, click **Set up connection**.
+3. When it says **Restart required**, use **Restart Steam/Epic** and confirm, or close and reopen the launcher yourself. Restarting can interrupt downloads or games.
+4. Wait for **Connected**, which means live communication has been verified. A configured but closed launcher shows **Not running** and offers **Launch**.
 
-For live progress and controls, check **Connected** in settings. If setup is needed, click **Connect to Steam**, then close and reopen Steam yourself. Windows may ask for administrator permission to create the setup file. This enables Steam UI debugging on this PC: local programs can inspect and control the Steam UI through that interface. It stays enabled after Playnite closes; remove `.cef-enable-remote-debugging` from the Steam folder and restart Steam to disable it. The plugin connects only to a Steam-owned loopback endpoint. No account login or API key is required. The connection details and instructions for disabling access are available under **More information** in settings.
+Windows may request administrator permission for setup. No launcher password, API key or separate account is requested.
 
-Start a Steam game from Playnite as usual. When a supported required update is detected, the plugin manages the update before continuing the game launch. You can browse your library while it runs.
+Setup enables the launcher's local UI debugging connection. It remains configured after Playnite closes. **Advanced information & permissions** explains setup and contains **Remove connection**. Successful removal stops that launcher's observation and clears its saved update information; a running launcher needs a restart to disable its active connection. Disabling Epic observation stops monitoring but keeps its saved connection setup. Use removal before uninstalling. Pre-existing or subsequently changed setup is preserved where appropriate.
 
-## Controls
+Epic setup applies to supported shortcuts, game links and an existing Windows startup entry. Direct executable launches, Playnite's **Open Epic** command or shortcuts replaced by Epic can bypass it. [More about Epic startup](BETA.md#connection-and-startup).
 
-These controls apply when the plugin is managing a supported Steam update.
+## Steam controls
 
-- **Play** — Start the selected game's required update and launch the game when it finishes.
-- **Pause** — Pause all Steam downloads and cancel the selected game's pending launch.
-- **Resume** — Resume downloads and restore the selected game's pending launch.
-- **×** — Pause all Steam downloads, remove the selected update from the queue, cancel its pending launch and return to the library. Pending launch cancellation does not depend on removal succeeding. If removal fails, the card stays visible for an explicit retry; library return waits for confirmation.
-- **Play another game** — Remove the previous selected update from the queue and cancel its pending launch before starting the new selection.
-- **Browse the library** — Keep the current update and pending launch active.
+- **Play:** wait for the selected game's required update, then continue its normal Playnite launch.
+- **Pause:** pause all Steam downloads and cancel the selected game's pending launch.
+- **Resume:** resume downloads and restore the selected game's pending launch.
+- **×:** pause downloads, remove the selected update from the queue and cancel its pending launch. If removal cannot be confirmed, the card allows a retry and the game remains cancelled.
+- **Play another game:** cancel the previous pending launch and remove its selected update from the queue before starting the new selection.
+- **Browse the library:** keep the current update and pending launch active.
 
-If close is rejected or cannot be confirmed, the card remains available for retry and the pending game launch stays cancelled. The displayed download state comes from observed Steam data.
-
-The percentage shown on covers and lists measures **downloaded data**. After downloading completes, the indicator shows the current processing stage. The detailed card keeps downloading and file work as separate progress bars.
+Steam shutdown/restart interrupts a retained launch. Reopen Steam and press **Play** again; reconnecting alone does not restart a cancelled game launch. Custom launch actions or requests already forwarded to Steam may behave differently.
 
 ## Settings
 
-Settings apply across Desktop and Fullscreen.
+Preferences apply across Desktop and Fullscreen. Each launcher keeps its own connection and supported behavior.
 
-| Setting | Purpose |
-| --- | --- |
-| **Enable plugin** | Turn Update Status on or off. |
-| **Steam folder** | Use the automatically detected folder or select it manually. Clear a manual choice to restore automatic detection. |
-| **Polling interval** | Choose how often the selected update is checked: 500–2000 ms, with 1000 ms as the default. |
-| **Download speed units** | Show bytes per second (KB/s, MB/s) or bits per second (kbps, Mbps). |
-| **Show update status** | Show or hide the automatic detailed update card. |
-| **Show update indicators on covers and lists** | Show or hide library update indicators. Also available from the extension menu. |
-| **Restore Playnite if Steam takes focus during an update** | Bring Playnite back to the foreground during the update. |
-| **When Playnite closes** | Keep the current download state, pause and keep the selected update in the queue, or pause and remove it from the queue. |
+- **General:** enable the plugin, choose speed units, show/hide the detailed status card and show/hide cover/list indicators.
+- **Steam:** connection, polling interval, focus restoration and what happens to the selected update when Playnite closes.
+- **Epic:** enable/disable beta observation, connection and polling interval.
 
-The default close behavior is **Keep current state**. These options apply to normal Playnite shutdown while the plugin is managing a selected update.
+Polling presets are **Fast (500 ms)**, **Balanced (1000 ms)** and **Low overhead (2000 ms)**. Existing custom values are preserved.
 
-> Tested with the current versions of Steam and Playnite at the time of testing. Behavior on older or future versions has not been verified.
+Steam's normal-shutdown options are **Keep current state**, **Pause and keep in queue** and **Pause and remove from queue**. The default is **Keep current state**. These options apply while the plugin is managing a selected Steam update; closing Playnite leaves Epic downloads running.
 
-If an established selected update stops providing fresh data, the card shows **Update data unavailable** while the reader retries. After one minute without fresh state, the pending launch is cancelled and the card asks you to press Play again. Initial connection setup has a three-minute limit. After a cancelled Play, including a failed close request, one minute without fresh update state also produces an unavailable error. Fresh queue confirmation can still complete Close, and restored observations never revive that cancelled launch. These limits do not apply while an update continues providing fresh state, including paused updates and file processing. Steam exit or restart also requires a new Play request for the selected game. Terminal interruption returns the held SDK startup callback with cancellation so Playnite can clear Launching; the error card remains available. Recoverable Steam update errors retain their waiting behavior.
+## Notes
 
-## Privacy
+The integrations use internal launcher UI interfaces, which can change with launcher updates. Missing or stale data produces a waiting/unavailable state rather than assumed progress or completion.
 
-Progress is read through Steam UI callbacks, which are private interfaces and may change with Steam updates. If those callbacks are unavailable, the plugin shows a waiting or unavailable state. This has been tested on the local Windows client; other Steam versions still need testing.
+Steam and Playnite were tested with the versions available during development. Behavior on older or future versions has not been verified. Genuine Epic update validation remains pending.
 
-Settings, detected folders and update history are stored locally in Playnite's plugin data folder. Update Status has no telemetry or remote service and does not ask for passwords, a Steam API key or a separate account.
-
-## Future plans
-
-My goal is to keep improving Update Status, refining the experience and adding useful features based on user feedback. I also plan to expand support to more launchers through Playnite's library integrations, bringing the same update monitoring and controls wherever supported.
+Settings and Steam update history are stored locally. Update Status has no telemetry or external service.
 
 ## Feedback
 
-Found a problem? Open an issue in this repository with your Playnite version, Steam version, Desktop or Fullscreen mode, theme name and steps to reproduce it. A screenshot of the problem is helpful.
+Open an [issue](https://github.com/AwaDensetsu/UpdateStatus/issues) with the plugin version, Playnite and launcher versions, Desktop/Fullscreen mode, theme and steps to reproduce the problem. A screenshot is helpful. For Epic, include the connection status and how you opened the launcher.
+
+## Future plans
+
+Improve reliability and the experience based on real use, validate more Epic capabilities and explore other launchers where a workable integration is available. Each launcher may support different controls.
 
 <details>
-<summary><strong>Build from source</strong></summary>
+<summary><strong>Build and test from source</strong></summary>
 
-The plugin targets Playnite SDK 6.13 and requires a host with SDK 6.13 or a compatible newer 6.x version. Custom launch actions or requests already forwarded to Steam may not support the same launch cancellation behavior.
+Build on Windows with .NET SDK 8 or newer, or Visual Studio with a compatible SDK. The plugin targets **.NET Framework 4.6.2**, C# 7.3 and Playnite SDK 6.13. It uses the SDK supplied by Playnite at runtime.
 
-On Windows, install the .NET SDK 8.0 or newer, or use Visual Studio with a compatible .NET SDK and the .NET desktop development workload. The projects target .NET Framework 4.6.2; the build SDK is only a developer tool. Run this from the repository folder:
-
-```shell
-dotnet build UpdateStatus.sln --configuration Release
+```text
+dotnet restore UpdateStatus.sln --locked-mode
+dotnet build UpdateStatus.sln --configuration Release --no-restore
+dotnet test tests/Tests.csproj --configuration Release --no-build --no-restore
+node tests/SteamUiBridgeChecks.cjs
+node tests/EpicUiBridgeChecks.cjs
 ```
 
-NuGet restores PlayniteSDK and the .NET Framework reference assemblies through PackageReference. Internet access is needed for the first restore. The checked-in packages.lock.json files record the resolved dependencies; use dotnet restore UpdateStatus.sln --locked-mode to verify them. In VS Code, Ctrl+Shift+B runs the included Debug build task; Release and packaging are available through Run Task.
+NuGet restores the checked-in dependencies through PackageReference. The first restore needs network access. JavaScript checks need Node.js; CI uses Node.js 24 and .NET SDK 10. The Windows workflow runs the Release build, NUnit tests and both mocked bridge suites. It does not publish releases or run the separate Playnite/WPF integration executable.
 
-To create an installer, pass your Playnite installation folder, which contains `Toolbox.exe`:
+To package the extension, provide the Playnite folder containing `Toolbox.exe`:
 
-```shell
-dotnet msbuild src/UpdateStatus.csproj -restore -target:PackageExtension -property:Configuration=Release -property:PlayniteDir="C:\Path\To\Playnite"
+```text
+dotnet build src/UpdateStatus.csproj --configuration Release --target:PackageExtension -p:RestoreLockedMode=true -p:PlayniteDir="C:\Path\To\Playnite"
 ```
 
-The installer is written to `artifacts/testing`. The runtime uses the SDK supplied by Playnite.
-
-The **Windows build** GitHub Actions workflow restores locked dependencies, compiles Release and runs the included NUnit and mocked Steam UI bridge tests on Windows. It uses .NET SDK 10 and Node.js 24 as developer tools; the plugin still targets .NET Framework 4.6.2. The workflow does not publish releases. See [tests/README.md](tests/README.md) for commands and coverage. Real Steam behavior and host-dependent UI checks still require separate manual/local verification.
-
-</details>
-
-<details>
-<summary><strong>How the plugin works</strong></summary>
-
-- `Plugin` receives Playnite SDK events and wires the services together. `LaunchCoordinator` owns the selected game's pending Play request, cancellation and SDK replay after Resume.
-- `SteamUpdateCatalog` scans local Steam library metadata and observes the download queue. Confirmed update history is stored in Playnite's plugin data folder.
-- `SteamUpdateReader` runs separately from Playnite and connects to a verified Steam-owned loopback CEF endpoint. Steam UI callbacks supply selected progress and queue snapshots. The parent validates identity and freshness before using them.
-- `SteamSelectedUpdateSession` keeps queue commands separate from launch intent. Completion requires fresh state for the selected game and finished file processing; download bytes reaching 100% are insufficient. Failed close requests can be retried without reviving the cancelled Play.
-- `UpdateMonitor` serializes observation and checks game/session identity before accepting command results. The UI displays these snapshots in the detailed card, cover indicators and game lists.
-- `Settings`, `SettingsViewModel` and `SettingsView` separate saved preferences, editing/setup behavior and XAML layout. Preferences are shared between Desktop and Fullscreen.
-
-The Steam UI methods are internal interfaces. Missing or changed callbacks produce unavailable data rather than assumed completion. Helper reconnects can restore observations; cancelled launches stay cancelled. The reader never loads Steam native DLLs or inspects their machine-code addresses.
+The installer is written to `artifacts/testing`. VS Code build/package tasks are included. See [tests/README.md](tests/README.md) for the separate Windows/SDK/WPF checks and their limits.
 
 </details>
 
 ## License
 
-Licensed under the [MIT License](LICENSE).
-
+[MIT](LICENSE).
 
 ## Credits
 

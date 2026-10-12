@@ -193,12 +193,11 @@ namespace PlayniteUpdateStatus.Core
                         (next.Phase == UpdatePhase.Error ? ": " + next.Detail : ""), next.Phase == UpdatePhase.Error);
                     current = next;
                 }
-                var handler = Changed;
-                var confirmedHandler = CommandConfirmed;
-                if (confirmedCommand.HasValue && confirmedHandler != null)
-                    confirmedHandler(identity.GameId, token, confirmedCommand.Value);
-                if (handler != null)
-                    handler(next);
+                if (confirmedCommand.HasValue && !ObserverNotifications.Notify(CommandConfirmed,
+                    subscriber => ((Action<Guid,long,UpdateCommand>)subscriber)(identity.GameId,token,confirmedCommand.Value),
+                    log,"Command confirmation",true))
+                { Stop(identity.GameId,token); return; }
+                if (!NotifyChanged(next)) return;
                 if (next.Phase == UpdatePhase.Idle || next.Phase == UpdatePhase.Running)
                     Stop(identity.GameId, token);
             }
@@ -219,9 +218,7 @@ namespace PlayniteUpdateStatus.Core
                 commandNotice = notice;
                 next = CopyControlState();
             }
-            var changed = Changed;
-            if (changed != null)
-                changed(next);
+            NotifyChanged(next);
         }
         public bool SetStatusDismissed(Guid gameId, long sessionId, bool dismissed)
         {
@@ -233,9 +230,7 @@ namespace PlayniteUpdateStatus.Core
                 dismissedGeneration = dismissed ? generation : -1;
                 next = CopyControlState();
             }
-            var changed = Changed;
-            if (changed != null)
-                changed(next);
+            NotifyChanged(next);
             return true;
         }
         public bool RequestClose(Guid gameId, long sessionId)
@@ -254,7 +249,7 @@ namespace PlayniteUpdateStatus.Core
                         next = CopyControlState();
                     }
                 }
-                else if (current.Phase != UpdatePhase.Updating || current.CanResume && current.ControlPaused != false)
+                else if (session is IUpdateDismissSession || current.Phase != UpdatePhase.Updating || current.CanResume && current.ControlPaused != false)
                 {
                     dismissedGeneration = generation;
                     dismissed = true;
@@ -266,14 +261,12 @@ namespace PlayniteUpdateStatus.Core
                     next = CopyControlState();
                 }
             }
-            var closing = CloseRequested;
-            if ((next == null || dismissed) && closing != null)
-                closing(gameId, sessionId);
+            if ((next == null || dismissed) && !ObserverNotifications.Notify(CloseRequested,
+                subscriber => ((Action<Guid,long>)subscriber)(gameId,sessionId),log,"Close request",true))
+            { Stop(gameId,sessionId); return false; }
             if (next != null)
             {
-                var changed = Changed;
-                if (changed != null)
-                    changed(next);
+                NotifyChanged(next);
                 return dismissed;
             }
             bool queueClose;
@@ -311,9 +304,7 @@ namespace PlayniteUpdateStatus.Core
                 commandNotice = requestedCommand.HasValue ? "Waiting for current download command…" : "Removing previous update from queue…";
                 pending = CopyControlState();
             }
-            var changed = Changed;
-            if (changed != null)
-                changed(pending);
+            if (!NotifyChanged(pending)) return completion.Task;
             ThreadPool.QueueUserWorkItem(_ =>
             {
                 // An already accepted Pause/Resume must settle before removal;
@@ -365,12 +356,10 @@ namespace PlayniteUpdateStatus.Core
                 commandNotice = command == UpdateCommand.Close ? "Removing update from queue…" : command == UpdateCommand.Pause ? "Requesting pause…" : "Requesting resume…";
                 pending = CopyControlState();
             }
-            var requested = CommandRequested;
-            if (requested != null)
-                requested(gameId, token, command);
-            var handler = Changed;
-            if (handler != null)
-                handler(pending);
+            if (!ObserverNotifications.Notify(CommandRequested,
+                subscriber => ((Action<Guid,long,UpdateCommand>)subscriber)(gameId,token,command),log,"Command request",true))
+            { Stop(gameId,token); return false; }
+            if (!NotifyChanged(pending)) return false;
             ThreadPool.QueueUserWorkItem(_ =>
             {
                 lock (gate)
@@ -404,9 +393,7 @@ namespace PlayniteUpdateStatus.Core
                         commandNotice = "Waiting for launcher confirmation…";
                     next = CopyControlState();
                 }
-                var changed = Changed;
-                if (changed != null)
-                    changed(next);
+                NotifyChanged(next);
             });
             return true;
         }
@@ -465,15 +452,23 @@ namespace PlayniteUpdateStatus.Core
                 // already-running read; adapters must not recreate resources after disposal.
                 if (session != null)
                 {
-                    session.Dispose();
+                    try { session.Dispose(); }
+                    catch (Exception error) when (!(error is OutOfMemoryException)) { ObserverNotifications.LogFailure(log,"Observer disposal",error); }
                     session = null;
                 }
                 game = null;
                 idle = current = new UpdateState { Revision = ++revision, Phase = UpdatePhase.Idle };
             }
-            var handler = Changed;
-            if (handler != null)
-                handler(idle);
+            NotifyChanged(idle);
+        }
+        private bool NotifyChanged(UpdateState state)
+        {
+            bool delivered = ObserverNotifications.Notify(Changed,
+                subscriber => ((Action<UpdateState>)subscriber)(state),log,"Update notification",state.Visible);
+            // Changed includes launch coordination, so a failed active notification cannot
+            // authorize Play. Cleanup notifications still reach all healthy subscribers.
+            if (!delivered && state.Visible) Stop(state.GameId,state.SessionId);
+            return delivered || !state.Visible;
         }
         public void Dispose()
         {

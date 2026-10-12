@@ -3,7 +3,7 @@ using System.Globalization;
 
 namespace PlayniteUpdateStatus.Core
 {
-    public enum UpdatePhase { Idle, Launching, Updating, Ready, Running, Error }
+    public enum UpdatePhase { Idle, Launching, Updating, Ready, Running, Error, WaitingForData }
     public enum SpeedUnit { BytesPerSecond, BitsPerSecond }
 
     public sealed class UpdateDisplay
@@ -122,6 +122,7 @@ namespace PlayniteUpdateStatus.Core
                     return Display == null ? "Updating…" : (Display.DownloadText.Length == 0 ? Display.StageText : Display.DownloadText + Environment.NewLine + Display.StageText);
                 if (Phase == UpdatePhase.Ready) return "Update complete — 100%";
                 if (Phase == UpdatePhase.Launching) return "Launching…";
+                if (Phase == UpdatePhase.WaitingForData) return UserMessage ?? "Waiting for update data…";
                 if (Phase == UpdatePhase.Error) return UserMessage ?? "Game update interrupted — check the launcher";
                 return string.Empty;
             }

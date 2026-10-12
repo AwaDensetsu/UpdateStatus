@@ -35,7 +35,7 @@ namespace PlayniteUpdateStatus.UI
         public CoverBadgePresenter(Action<string,bool> log) { this.log = log; }
         public void Refresh(Window window, SteamCatalogSnapshot catalog, bool enabled, SteamCoverHistory history = null)
         { Refresh(window,catalog,enabled,history,null); }
-        public void Refresh(Window window, SteamCatalogSnapshot catalog, bool enabled, SteamCoverHistory history, UpdateState selected)
+        public void Refresh(Window window, SteamCatalogSnapshot catalog, bool enabled, SteamCoverHistory history, UpdateState selected, Func<Playnite.SDK.Models.Game,CoverBadgeInfo> otherProvider = null)
         {
             if (!enabled || window == null || !window.IsVisible) { Dispose(); return; }
             var nextRoot = window.Content as FrameworkElement;
@@ -45,7 +45,7 @@ namespace PlayniteUpdateStatus.UI
                 Dispose(); host = window; root = nextRoot;
                 root.LayoutUpdated += LayoutChanged; host.Closed += HostClosed;
             }
-            var snapshot = new CoverBadgeSnapshot(catalog,history,selected);
+            var snapshot = new CoverBadgeSnapshot(catalog,history,selected,otherProvider);
             var found = new Dictionary<FrameworkElement,CoverBadgeInfo>();
             var rowCandidates = new List<FrameworkElement>();
             var stack = new Stack<DependencyObject>(); stack.Push(root);

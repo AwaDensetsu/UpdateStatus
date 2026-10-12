@@ -140,8 +140,26 @@ namespace PlayniteUpdateStatus.Launchers.Steam
         }
         public static string SessionId()
         {
+            string sessionId;
+            if (SteamSessionDiscovery.TryRead("steam.exe", out sessionId))
+                return sessionId;
+
+            // Preserve discovery on Windows configurations where WTS enumeration
+            // is unavailable or denied. Neither path caches launcher identity.
             var processes = Process.GetProcessesByName("steam");
-            try { return string.Join(",",processes.Select(process => process.Id).OrderBy(id => id)); }
+            int session;
+            using (var current = Process.GetCurrentProcess()) session = current.SessionId;
+            var ids = new List<int>();
+            try
+            {
+                foreach (var process in processes)
+                {
+                    try { if (process.SessionId == session) ids.Add(process.Id); }
+                    catch (InvalidOperationException) { }
+                    catch (System.ComponentModel.Win32Exception) { }
+                }
+                return string.Join(",",ids.OrderBy(id => id));
+            }
             finally { foreach (var process in processes) process.Dispose(); }
         }
     }

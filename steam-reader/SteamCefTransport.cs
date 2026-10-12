@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Diagnostics;
+using System.Security.Principal;
 using System.IO;
 using System.Linq;
 using System.Management;
@@ -8,7 +10,6 @@ using System.Net;
 using System.Net.Http;
 using System.Net.WebSockets;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Web.Script.Serialization;
 
@@ -19,24 +20,31 @@ internal static class SteamCefTransport
     {
         if (string.IsNullOrWhiteSpace(root)) throw new InvalidOperationException("Steam installation unavailable");
         root = Path.GetFullPath(root).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
-        var candidates = new Dictionary<uint, int>();
-        using (var search = new ManagementObjectSearcher("SELECT ProcessId, ExecutablePath, CommandLine FROM Win32_Process WHERE Name='steamwebhelper.exe'"))
+        int session;
+        using (var current = Process.GetCurrentProcess()) session = current.SessionId;
+        string user = WindowsIdentity.GetCurrent().User.Value;
+        var observed = new List<SteamDebugProcess>();
+        using (var search = new ManagementObjectSearcher("SELECT ProcessId, SessionId, ExecutablePath, CommandLine FROM Win32_Process WHERE Name='steamwebhelper.exe'"))
         using (var processes = Get(search))
         {
             foreach (ManagementObject process in processes)
+            using (process)
             {
-                using (process)
+                if (process["SessionId"] == null) continue;
+                var candidate = new SteamDebugProcess(Convert.ToUInt32(process["ProcessId"]),Convert.ToInt32(process["SessionId"]),
+                    process["ExecutablePath"] as string,process["CommandLine"] as string,null);
+                if (!SteamEndpointSelection.DebugPort(root,session,candidate).HasValue) continue;
+                try
                 {
-                    string path = process["ExecutablePath"] as string;
-                    if (path == null || !Path.GetFullPath(path).StartsWith(root, StringComparison.OrdinalIgnoreCase)) continue;
-                    var match = Regex.Match(process["CommandLine"] as string ?? "", @"--remote-debugging-port[= ](\d{1,5})(?:\s|""|$)");
-                    int port;
-                    if (match.Success && int.TryParse(match.Groups[1].Value, out port) && port >= 1 && port <= 65535)
-                        candidates[(uint)process["ProcessId"]] = port;
+                    string owner = ProcessUserSid(candidate.Id);
+                    if (owner != null) observed.Add(new SteamDebugProcess(candidate.Id,candidate.Session,candidate.Executable,candidate.CommandLine,owner));
                 }
+                catch (ManagementException) { } // Unverifiable ownership never authorizes an endpoint.
             }
         }
-        
+        var candidates = SteamEndpointSelection.Candidates(root,session,user,observed);
+        Uri selected = null;
+        uint selectedOwner = 0;
         if (candidates.Count == 0) throw new InvalidOperationException("No Steam UI debugging process available");
         using (var search = new ManagementObjectSearcher(@"root\StandardCimv2", "SELECT LocalAddress, LocalPort, OwningProcess FROM MSFT_NetTCPConnection WHERE State=2"))
         using (var listeners = Get(search))
@@ -53,11 +61,23 @@ internal static class SteamCefTransport
                     if (!candidates.TryGetValue(owner, out expected) || port != expected ||
                         !IPAddress.TryParse(listener["LocalAddress"] as string, out address) || !IPAddress.IsLoopback(address)) continue;
                     Uri target = FindSharedTarget(new UriBuilder("http", address.ToString(), port).Uri);
-                    if (target != null) return target;
+                    if (target == null) continue;
+                    if (selected != null && (selectedOwner != owner || selected.Port != target.Port || selected.PathAndQuery != target.PathAndQuery))
+                        throw new InvalidOperationException("Ambiguous Steam UI connection");
+                    selected = target; selectedOwner = owner;
                 }
             }
         }
-        throw new InvalidOperationException("Steam-owned loopback connection unavailable");
+        return selected ?? throw new InvalidOperationException("Steam-owned loopback connection unavailable");
+    }
+
+    private static string ProcessUserSid(uint id)
+    {
+        // Projected WMI rows need not contain an invokable instance path.
+        // Bind to the process key before requesting ownership.
+        using (var identity = new ManagementObject("Win32_Process.Handle='" + id.ToString(CultureInfo.InvariantCulture) + "'"))
+        using (var owner = identity.InvokeMethod("GetOwnerSid",(ManagementBaseObject)null,null))
+            return owner != null && Convert.ToUInt32(owner["ReturnValue"]) == 0 ? owner["Sid"] as string : null;
     }
 
     private static ManagementObjectCollection Get(ManagementObjectSearcher search)

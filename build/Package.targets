@@ -15,6 +15,8 @@
       <ExtensionPackageFiles Include="$(TargetPath)" />
       <ExtensionPackageFiles Include="$(TargetDir)SteamUpdateReader.exe" />
       <ExtensionPackageFiles Include="$(TargetDir)SteamUpdateReader.exe.config" />
+      <ExtensionPackageFiles Include="$(TargetDir)LauncherConnectionSetup.exe" />
+      <ExtensionPackageFiles Include="$(TargetDir)LauncherConnectionSetup.exe.config" />
       <ExtensionPackageFiles Include="$(MSBuildProjectDirectory)\extension.yaml" />
       <ExtensionPackageFiles Include="$(MSBuildProjectDirectory)\..\LICENSE" />
     </ItemGroup>

@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <AssemblyName>LauncherConnectionSetup</AssemblyName>
+    <OutputPath>..\bin\ConnectionSetup\$(Configuration)\</OutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System.Web.Extensions" />
+    <Reference Include="System.Management" />
+    <Compile Include="..\src\Launchers\Epic\EpicConnectionSetup.cs" Link="EpicConnectionSetup.cs" />
+    <Compile Include="..\src\Launchers\Epic\EpicStartupRoutes.cs" Link="EpicStartupRoutes.cs" />
+    <Compile Include="..\src\Launchers\Epic\EpicLocalAccess.cs" Link="EpicLocalAccess.cs" />
+  </ItemGroup>
+</Project>

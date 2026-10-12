@@ -16,14 +16,15 @@ namespace PlayniteUpdateStatus.UI
         private readonly Func<bool> enabled;
         private readonly Func<SteamCoverHistory> history;
         private readonly Func<UpdateState> selected;
+        private readonly Func<Playnite.SDK.Models.Game,CoverBadgeInfo> otherProvider;
         private readonly CoverBadgeVisual visual = new CoverBadgeVisual();
         private DispatcherTimer timer;
         private bool stopped;
         public CoverBadgeControl(Func<SteamCatalogSnapshot> catalog, Func<bool> enabled, Func<SteamCoverHistory> history = null)
             : this(catalog,enabled,history,null) { }
-        public CoverBadgeControl(Func<SteamCatalogSnapshot> catalog, Func<bool> enabled, Func<SteamCoverHistory> history, Func<UpdateState> selected)
+        public CoverBadgeControl(Func<SteamCatalogSnapshot> catalog, Func<bool> enabled, Func<SteamCoverHistory> history, Func<UpdateState> selected, Func<Playnite.SDK.Models.Game,CoverBadgeInfo> otherProvider = null)
         {
-            this.catalog = catalog; this.enabled = enabled; this.history = history; this.selected = selected;
+            this.catalog = catalog; this.enabled = enabled; this.history = history; this.selected = selected; this.otherProvider = otherProvider;
             Content = visual; IsHitTestVisible = false; Focusable = false; IsTabStop = false;
             HorizontalAlignment = HorizontalAlignment.Stretch; VerticalAlignment = VerticalAlignment.Stretch; ClipToBounds = true;
             Visibility = Visibility.Collapsed;
@@ -36,7 +37,7 @@ namespace PlayniteUpdateStatus.UI
             var game = GameContext ?? CoverGameContext.Resolve(DataContext);
             bool show = !stopped && enabled();
             if (timer != null) { if (show && IsLoaded) timer.Start(); else timer.Stop(); }
-            var badge = show ? new CoverBadgeSnapshot(catalog(),history == null ? null : history(),selected == null ? null : selected()).Find(game) : null;
+            var badge = show ? new CoverBadgeSnapshot(catalog(),history == null ? null : history(),selected == null ? null : selected(),otherProvider).Find(game) : null;
             if (badge != null) SizeToCover(badge.GameId);
             visual.Render(badge); Visibility = badge == null ? Visibility.Collapsed : Visibility.Visible;
         }

@@ -1,24 +1,26 @@
 # Changelog
 
+## 1.2.0
+
+Changes since 1.1.0:
+
+- Add optional Epic Games update observation (beta), off by default for new installations. Existing saved choices are preserved; Epic percentages and download controls remain unavailable.
+- Add separate General, Steam and Epic settings pages with matching connection cards.
+- Add launcher setup, confirmed restart and connection removal controls.
+- Clear a launcher's update information when its connection is removed, and preserve unrelated or changed setup.
+- Improve Steam launch cancellation, observer error handling and connection/session checks.
+- Reduce temporary allocations from repeated Steam process discovery.
+- Expand automated tests and update setup instructions.
+
 ## 1.1.0
 
-- Read live progress and download controls through Steam UI callbacks instead of native DLLs and binary addresses.
-- Add one-time Steam connection setup in settings.
-- Improve Pause, Resume, Close and game switching without restoring cancelled launches.
-- Recover from Steam shutdown, restart and missing data without leaving Playnite stuck on Launching.
-- Reduce repeated catalog work and clean up the launch lifecycle code.
-- Use standard NuGet/MSBuild tooling with .NET Framework 4.6.2 and include automated tests and Windows CI.
+- Replace native Steam DLL/binary access with a local Steam UI connection.
+- Add first-time connection setup.
+- Improve Pause/Resume, Close, game switching and Steam restart recovery.
+- Move to standard NuGet/MSBuild, .NET Framework 4.6.2 and automated Windows checks.
 
 ## 1.0.0 — Initial release
 
-Steam is currently the supported launcher.
-
-- Show update status in Desktop and Fullscreen.
-- Display download size, speed, remaining time and separate file update progress.
-- Show update indicators on game covers and lists.
-- Pause and resume downloads, then launch the selected game when its update finishes.
-- Use × to pause downloads, remove the selected update from the queue and cancel its pending launch.
-- When starting another game, remove the previous selected update from the queue and cancel its pending launch.
-- Remember games that need updates between restarts.
-- Find the Steam installation folder automatically, with manual selection available.
-- Choose speed units, indicator visibility and what happens to the selected update when Playnite closes.
+- Steam update status, download metrics and separate file progress.
+- Cover/list indicators, Pause/Resume and launch after updating.
+- Queue removal, remembered update requirements and shutdown preferences.

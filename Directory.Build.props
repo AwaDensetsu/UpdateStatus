@@ -2,7 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net462</TargetFramework>
     <LangVersion>7.3</LangVersion>
-    <Version>1.1.0</Version>
+    <Version>1.2.0</Version>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <DebugType Condition="'$(Configuration)' == 'Release'">none</DebugType>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>

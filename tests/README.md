@@ -1,27 +1,36 @@
-# Tests
+# Development checks
 
-The source archive includes 105 NUnit tests and 16 JavaScript bridge checks. They use synthetic data and mocked controls, without a Steam account, installed Playnite or an active download.
+Run from the repository root on Windows with a compatible .NET SDK. JavaScript checks need Node.js. NuGet access is needed for the first restore.
 
-Run from the repository root on Windows with a compatible .NET SDK. The JavaScript checks need Node.js; CI uses version 24. NuGet access is needed for the initial restore.
+## Unit and bridge tests
 
-```shell
+```text
 dotnet restore UpdateStatus.sln --locked-mode
 dotnet build UpdateStatus.sln --configuration Release --no-restore
 dotnet test tests/Tests.csproj --configuration Release --no-build --no-restore
 node tests/SteamUiBridgeChecks.cjs
+node tests/EpicUiBridgeChecks.cjs
 ```
 
-To inspect or run a smaller group:
+These use synthetic state, temporary installation fixtures and mocked launcher controls. They cover parsing, progress, launch intent/cancellation, errors, session identity, setup/removal and stale replies. They do not require an installed Playnite, Steam account or active download and do not change real launcher configuration/downloads. Windows file-identity fixtures use actual Windows filesystem APIs on their temporary files. Node checks use mocked Steam/Epic UI APIs.
 
-```shell
-dotnet test tests/Tests.csproj --configuration Release --list-tests
-dotnet test tests/Tests.csproj --configuration Release --filter TestCategory=SelectedSession
+The Windows CI workflow runs the build, NUnit and both JavaScript suites. It does not run the separate host-dependent integration project or perform real launcher validation.
+
+## Playnite SDK and WPF integration
+
+With an installed Playnite folder on Windows:
+
+```text
+dotnet build tests/Integration/IntegrationChecks.csproj --configuration Release -p:RestoreLockedMode=true
+bin/Tests/Tests.exe --playnite="C:\Path\To\Playnite"
 ```
 
-The NUnit cases cover parsing, progress presentation, download/file-work separation, transfer metrics, settings setup, borrowed reader freshness, failed close retries, data-loss deadlines including continuous observer errors, and cancelled launch intent, SDK callback return and UI dispatcher unwinding, expired catalog data, inventory replacement and recovery. Steam exit/restart behavior is simulated with independent client identities. The bridge checks cover callback shapes, local versus remote clients, command arguments, queue scope and subscription cleanup.
+This separate 32-bit executable covers SDK startup callbacks, Desktop/Fullscreen UI, settings and owned disposable Windows-process lifecycles. Native snapshot checks read process metadata; launcher commands/setup use fixtures. The default suite does not restart real launchers. See [Integration/README.md](Integration/README.md) for focused commands.
 
-Temporary installation fixtures contain harmless placeholder files. They are never executed or loaded. Setup actions and administrator prompts are mocked; these tests do not modify a real Steam installation or change its downloads.
+## Latest local validation
 
-The Windows build workflow restores locked dependencies, compiles Release and runs both suites. Reports are written under ignored `artifacts/`. Test sources and dependencies are excluded from the `.pext` installer.
+For 1.2.0, the development run passed **332 NUnit cases, 16 Steam bridge checks, 21 Epic bridge checks and 259 Windows/SDK/WPF checks**, with a clean Release build. These are local results, not a claim that GitHub CI or another machine has run them. Source ZIP/installer integrity was also checked.
 
-These checks do not replace manual testing with actual Steam updates, restart timing, Playnite views and themes. Windows/SDK/UI integration checks requiring a local Playnite installation are maintained separately from this source snapshot.
+The owner confirmed the preceding 1.1.17 development build worked in normal use. The 1.2.0 package still needs an installation/upgrade smoke test. Genuine Epic game updates, connected/active Epic performance, unusual multi-user/RDP setups and long sessions still need separate validation. Automated tests do not guarantee behavior on every launcher version or custom theme.
+
+Test sources, temporary reports and development dependencies are excluded from the installer. Generated output belongs in ignored `bin`, `obj` and `artifacts` directories.

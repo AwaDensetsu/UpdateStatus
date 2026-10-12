@@ -15,8 +15,11 @@
     <PackageReference Include="NUnit3TestAdapter" Version="5.0.0" PrivateAssets="all" />
     <PackageReference Include="PlayniteSDK" Version="6.13.0" PrivateAssets="all" />
     <Reference Include="WindowsBase" />
+    <Reference Include="System.Web.Extensions" />
     <ProjectReference Include="..\src\UpdateStatus.csproj" />
     <Compile Include="Unit\**\*.cs" />
+    <Compile Include="..\steam-reader\SteamEndpointSelection.cs" Link="Support\SteamEndpointSelection.cs" />
+    <Compile Include="..\src\Launchers\Steam\SteamSessionDiscovery.cs" Link="Support\SteamSessionDiscovery.cs" />
     <Compile Include="Support\SteamSamples.cs" />
   </ItemGroup>
 </Project>

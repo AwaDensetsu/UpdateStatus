@@ -122,8 +122,11 @@ namespace PlayniteUpdateStatus.Launch
 
         private void RequestMonitoring()
         {
-            catalog.Start();
-            catalog.RefreshSoon();
+            if (!Settings.SteamConnectionRemoved)
+            {
+                catalog.Start();
+                catalog.RefreshSoon();
+            }
             var requested = MonitoringRequested;
             if (requested != null)
                 requested();
@@ -173,6 +176,21 @@ namespace PlayniteUpdateStatus.Launch
                 recovery.Observe(state, DateTime.UtcNow);
         }
 
+        public void RemoveLauncherObservation(string key)
+        {
+            lock (selectionGate)
+            {
+                if (activeLauncher?.Registration.Key != key) return;
+                ++launchRequest;
+                steamRecovery?.Cancel();
+                selectedLaunch?.Cancel();
+                if (pausedLaunch != null) pausedLaunch.ResumeConfirmed = false;
+                pausedLaunch = queuedResume = null;
+                deferredPlay = null;
+                monitor.Stop(Guid.Empty);
+                ClearObservation();
+            }
+        }
         public void ClearObservation()
         {
             activeGame = null;
@@ -349,7 +367,7 @@ namespace PlayniteUpdateStatus.Launch
                 // Returning this short callback lets the cancelled outer UI Play
                 // finish host cleanup. Replay only the supported native action;
                 // never replace a custom action or selected ROM with SDK defaults.
-                if (serializeUiPlay && IsNativeSteamPlay(args))
+                if (serializeUiPlay && !Settings.SteamConnectionRemoved && IsNativeSteamPlay(args))
                 {
                     DeferReplacementPlay(args, request, old, previous);
                     return;
@@ -370,7 +388,8 @@ namespace PlayniteUpdateStatus.Launch
                         return;
                     }
                 }
-                var match = launchers.Resolve(args.Game, null);
+                var match = launchers.Resolve(args.Game, entry => entry.Key == "steam" ? !Settings.SteamConnectionRemoved :
+                    entry.Key != "epic" || Settings.EpicEnabled && !Settings.EpicConnectionRemoved);
                 if (match == null)
                 {
                     lock (selectionGate)
@@ -407,7 +426,7 @@ namespace PlayniteUpdateStatus.Launch
                     observedUpdate = false;
                     NotifyObservationStarted(true);
                     var recovery = nativeSteamPlay && !defer ? recoveryFactory(uint.Parse(identity.LauncherId), () => args.Game.IsRunning, Log) : null;
-                    var starting = monitor.Start(identity, defer ? selectedSessionFactory(identity) : match.Registration.Adapter.Open(identity), Settings.PollingInterval);
+                    var starting = monitor.Start(identity, defer ? selectedSessionFactory(identity) : match.Registration.Adapter.Open(identity), match.Registration.Key == "epic" ? Settings.EpicPollingInterval : Settings.PollingInterval);
                     recoverySession = starting.SessionId;
                     steamRecovery = recovery;
                     if (recovery != null)

@@ -12,8 +12,10 @@
     <Compile Include="..\src\Launchers\Steam\SteamLiveSample.cs" Link="SteamLiveSample.cs" />
     <Compile Include="..\src\Launchers\Steam\SteamManifestParser.cs" Link="SteamManifestParser.cs" />
     <Compile Include="..\src\Launchers\Steam\SteamLocator.cs" Link="SteamLocator.cs" />
+    <Compile Include="..\src\Launchers\Steam\SteamSessionDiscovery.cs" Link="SteamSessionDiscovery.cs" />
     <Compile Include="..\src\Launchers\Steam\KeyValues.cs" Link="KeyValues.cs" />
     <Compile Include="..\src\Launchers\Steam\SteamUiAccess.cs" Link="SteamUiAccess.cs" />
+    <Compile Include="..\src\Launchers\Steam\SteamConnectionSetup.cs" Link="SteamConnectionSetup.cs" />
     <EmbeddedResource Include="SteamUiBridge.js" />
   </ItemGroup>
 </Project>

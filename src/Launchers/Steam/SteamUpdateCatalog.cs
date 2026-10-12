@@ -368,9 +368,7 @@ namespace PlayniteUpdateStatus.Launchers.Steam
                             lastEntries[entry.AppId] = state;
                         }
                 }
-                var changedHandler = Changed;
-                if (changedHandler != null)
-                    changedHandler(next);
+                NotifyChanged(next);
             }
             catch (Exception e)
             {
@@ -382,9 +380,7 @@ namespace PlayniteUpdateStatus.Launchers.Steam
                     next = current = new SteamCatalogSnapshot(apps, null, "Steam catalog unavailable");
                 }
                 log("Steam catalog unavailable: " + e.GetType().Name, true);
-                var handler = Changed;
-                if (handler != null)
-                    handler(next);
+                NotifyChanged(next);
             }
             finally { Interlocked.Exchange(ref busy, 0); }
         }
@@ -410,9 +406,13 @@ namespace PlayniteUpdateStatus.Launchers.Steam
                 next = current = new SteamCatalogSnapshot(apps, null, "Steam catalog stopped");
                 expiredSource = expiredSnapshot = null;
             }
-            var handler = Changed;
-            if (handler != null)
-                handler(next);
+            NotifyChanged(next);
+        }
+        private void NotifyChanged(SteamCatalogSnapshot snapshot)
+        {
+            // Catalog notifications are read-only; one UI observer must not invalidate
+            // a verified sample or prevent other observers from receiving it.
+            ObserverNotifications.Notify(Changed, subscriber => ((Action<SteamCatalogSnapshot>)subscriber)(snapshot),log,"Catalog notification");
         }
         public void Dispose()
         {

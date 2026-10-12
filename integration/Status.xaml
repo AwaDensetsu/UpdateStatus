@@ -1,0 +1,6 @@
+<!-- Inside a game-bound Playnite view; the plugin hides this unless the game is being monitored. -->
+<ContentControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                x:Name="PlayniteUpdateStatus_Status"
+                Focusable="False" IsTabStop="False"
+                HorizontalAlignment="Left" MinWidth="220" Margin="0,8,0,0" />

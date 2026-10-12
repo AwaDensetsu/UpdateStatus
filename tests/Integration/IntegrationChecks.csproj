@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>Tests</AssemblyName>
+    <Prefer32Bit>true</Prefer32Bit>
+    <UseWPF>true</UseWPF>
+    <IsPackable>false</IsPackable>
+    <OutputPath>..\..\bin\Tests\</OutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="PlayniteSDK" Version="6.13.0" PrivateAssets="all" />
+    <ProjectReference Include="..\..\src\UpdateStatus.csproj" />
+    <Compile Remove="RestartFixture\**\*.cs" />
+    <ProjectReference Include="RestartFixture\RestartFixture.csproj" ReferenceOutputAssembly="false" />
+    <Compile Include="..\Support\SteamSamples.cs" Link="Support\SteamSamples.cs" />
+  </ItemGroup>
+  <Target Name="CopyRestartFixture" AfterTargets="Build">
+    <MSBuild Projects="RestartFixture\RestartFixture.csproj" Targets="GetTargetPath" Properties="Configuration=$(Configuration)">
+      <Output TaskParameter="TargetOutputs" ItemName="RestartFixtureOutput" />
+    </MSBuild>
+    <Copy SourceFiles="@(RestartFixtureOutput);@(RestartFixtureOutput->'%(FullPath).config')" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" />
+  </Target>
+  <Target Name="CopyConnectionSetup" AfterTargets="Build">
+    <MSBuild Projects="..\..\connection-setup\ConnectionSetup.csproj" Targets="GetTargetPath" Properties="Configuration=$(Configuration)">
+      <Output TaskParameter="TargetOutputs" ItemName="ConnectionSetupOutput" />
+    </MSBuild>
+    <Copy SourceFiles="@(ConnectionSetupOutput);@(ConnectionSetupOutput->'%(FullPath).config')" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" />
+  </Target>
+  <Target Name="CopySteamReader" AfterTargets="Build">
+    <MSBuild Projects="..\..\steam-reader\SteamReader.csproj" Targets="GetTargetPath" Properties="Configuration=$(Configuration)">
+      <Output TaskParameter="TargetOutputs" ItemName="SteamReaderOutput" />
+    </MSBuild>
+    <Copy SourceFiles="@(SteamReaderOutput);@(SteamReaderOutput->'%(FullPath).config')" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

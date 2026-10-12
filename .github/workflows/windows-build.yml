@@ -44,3 +44,6 @@ jobs:
         run: dotnet test tests/Tests.csproj --configuration Release --no-build --no-restore --logger "trx;LogFileName=unit-tests.trx" --results-directory artifacts/test-results
       - name: Check Steam UI bridge with mocked callbacks
         run: node tests/SteamUiBridgeChecks.cjs
+
+      - name: Check Epic observation bridge with mocked native APIs
+        run: node tests/EpicUiBridgeChecks.cjs

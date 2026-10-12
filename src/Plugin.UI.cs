@@ -56,14 +56,14 @@ namespace PlayniteUpdateStatus
                 if (Settings.AutomaticOverlay)
                 {
                     target = FindLaunchWindow(window, state.GameId);
-                    if ((launchCoordinator.ObservedUpdate || state.Phase == UpdatePhase.Error) && !HasIntegratedControl(target, state)) universal.Refresh(target, state, fullscreen);
+                    if ((launchCoordinator.ObservedUpdate || state.Phase == UpdatePhase.Error || state.Phase == UpdatePhase.WaitingForData) && !HasIntegratedControl(target, state)) universal.Refresh(target, state, fullscreen);
                     else universal.Dispose();
                 }
                 else
                 {
                     universal.Dispose();
                 }
-                if (Settings.KeepFrontendVisible)
+                if (Settings.KeepFrontendVisible && launchCoordinator.ActiveLauncher?.Registration.Key == "steam")
                 {
                     var launcher = launchCoordinator.ActiveLauncher;
                     string result = launcher == null ? null : FrontendVisibility.RestoreForLauncher(target, state, foregroundPolicy, launcher.Registration.ClientProcesses,

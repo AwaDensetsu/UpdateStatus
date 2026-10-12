@@ -9,9 +9,15 @@ internal static class Program
 {
     public static int Main(string[] args)
     {
-        if (args.Length == 2 && args[1] == "--enable-local-access")
+        if ((args.Length == 2 || args.Length == 3) && (args[1] == "--enable-local-access" || args[1] == "--disable-local-access"))
         {
-            try { SteamUiAccess.Enable(args[0]); return 0; }
+            try
+            {
+                if (args.Length == 3 && args[2] != System.Security.Principal.WindowsIdentity.GetCurrent().User.Value) return 1;
+                var setup = new SteamConnectionSetup(args[0]);
+                if (args[1] == "--enable-local-access") setup.Enable(); else setup.Remove();
+                return 0;
+            }
             catch (Exception error) { Console.Error.WriteLine("Local access setup failed: " + error.Message); return 1; }
         }
         if (args.Length < 2) return 2;

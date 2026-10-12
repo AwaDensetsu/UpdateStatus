@@ -125,7 +125,7 @@ namespace PlayniteUpdateStatus.UI
             actionButton.ToolTip = null;
             closeButton.Visibility = showControls && visible ? Visibility.Visible : Visibility.Collapsed;
             closeButton.IsEnabled = visible && monitor.ControlsEnabled && !state.CommandPending;
-            AutomationProperties.SetName(closeButton,"Pause downloads and return to library");
+            AutomationProperties.SetName(closeButton,state.LauncherName == "Epic Games" ? "Hide update status" : "Pause downloads and return to library");
             actionButton.Visibility = commands ? Visibility.Visible : Visibility.Collapsed;
             actionButton.IsEnabled = commands && !state.CommandPending;
             IsHitTestVisible = commands || closeButton.Visibility == Visibility.Visible;

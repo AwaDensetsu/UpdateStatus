@@ -27,6 +27,8 @@ namespace PlayniteUpdateStatus.Launchers.Steam
             lock (Gate) { connectedRoot = root; connectedSession = SteamLocator.SessionId(); connectedAt = DateTime.UtcNow; }
         }
 
+        public static void Disable(string root) { new SteamConnectionSetup(root).Remove(); }
+
         public static bool CanConnect(string root) { return Configured(root) || Connected(root); }
 
         // Called only by the explicit settings button. Existing markers are preserved.
@@ -34,9 +36,7 @@ namespace PlayniteUpdateStatus.Launchers.Steam
         {
             if (!SteamLocator.IsValidRoot(root)) throw new ArgumentException("Select a valid Steam installation folder first.");
             if (Configured(root) || Connected(root)) return;
-            try { using (new FileStream(Path.Combine(root, Marker), FileMode.CreateNew, FileAccess.Write, FileShare.Read)) { } }
-            catch (IOException) { if (!Configured(root)) throw; }
-            catch (UnauthorizedAccessException) { if (!Configured(root)) throw; }
+            new SteamConnectionSetup(root).Enable();
         }
     }
 }

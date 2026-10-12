@@ -1,5 +1,8 @@
 namespace PlayniteUpdateStatus.Core
 {
+    // A read-only provider closes its presentation without changing the native download.
+    public interface IUpdateDismissSession : IUpdateSession { }
+
     public enum UpdateCommand { Pause, Resume, Close }
     // Optional capability. Poll remains observation-only; commands require explicit UI action.
     public interface IUpdateControlSession : IUpdateSession

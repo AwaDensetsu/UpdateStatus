@@ -6,7 +6,7 @@
     <AssemblyName>PlayniteUpdateStatus</AssemblyName>
     <UseWPF>true</UseWPF>
     <AssemblyTitle>Update Status</AssemblyTitle>
-    <Description>Steam update monitoring and download controls across Playnite themes</Description>
+    <Description>Steam update monitoring with experimental read-only Epic indicators</Description>
     <OutputPath>..\bin\$(Configuration)\</OutputPath>
   </PropertyGroup>
   <ItemGroup>
@@ -14,7 +14,11 @@
     <!-- WPF markup compilation needs System.Web when resolving serializer metadata. -->
     <Reference Include="System.Web" />
     <Reference Include="System.Web.Extensions" />
+    <Reference Include="System.Management" />
+    <Reference Include="System.Net.Http" />
+    <EmbeddedResource Include="Launchers\Epic\EpicUiBridge.js" LogicalName="EpicUiBridge.js" />
     <ProjectReference Include="..\steam-reader\SteamReader.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\connection-setup\ConnectionSetup.csproj" ReferenceOutputAssembly="false" />
     <None Update="extension.yaml" CopyToOutputDirectory="PreserveNewest" />
 
   </ItemGroup>
@@ -23,6 +27,12 @@
       <Output TaskParameter="TargetOutputs" ItemName="SteamReaderOutput" />
     </MSBuild>
     <Copy SourceFiles="@(SteamReaderOutput);@(SteamReaderOutput->'%(FullPath).config')" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" />
+  </Target>
+  <Target Name="CopyConnectionSetup" AfterTargets="Build">
+    <MSBuild Projects="..\connection-setup\ConnectionSetup.csproj" Targets="GetTargetPath" Properties="Configuration=$(Configuration)">
+      <Output TaskParameter="TargetOutputs" ItemName="ConnectionSetupOutput" />
+    </MSBuild>
+    <Copy SourceFiles="@(ConnectionSetupOutput);@(ConnectionSetupOutput->'%(FullPath).config')" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" />
   </Target>
   <Import Project="..\build\Package.targets" />
 </Project>

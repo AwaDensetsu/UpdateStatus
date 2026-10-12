@@ -49,10 +49,12 @@ namespace PlayniteUpdateStatus.UI
         private readonly HashSet<uint> remembered = new HashSet<uint>();
         private readonly DateTime received;
         private readonly UpdateState selected;
+        private readonly Func<Game,CoverBadgeInfo> otherProvider;
         public CoverBadgeSnapshot(SteamCatalogSnapshot catalog, SteamCoverHistory history = null) : this(catalog,history,null) { }
-        public CoverBadgeSnapshot(SteamCatalogSnapshot catalog, SteamCoverHistory history, UpdateState selected)
+        public CoverBadgeSnapshot(SteamCatalogSnapshot catalog, SteamCoverHistory history, UpdateState selected, Func<Game,CoverBadgeInfo> otherProvider = null)
         {
             this.selected = selected;
+            this.otherProvider = otherProvider;
             if (history != null) history.CopyPendingTo(remembered);
             if (catalog == null || !catalog.Fresh) return;
             received = catalog.ReceivedUtc;
@@ -61,6 +63,7 @@ namespace PlayniteUpdateStatus.UI
         public CoverBadgeInfo Find(Game game)
         {
             if (game == null || game.IsRunning) return null;
+            if (game.PluginId != SteamGameIdentity.LibraryId) return otherProvider?.Invoke(game);
             // Cover identity must come from the importing library, never its title
             // or image filename. Manual/custom launch actions remain unclassified.
             uint appId;

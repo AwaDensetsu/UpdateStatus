@@ -17,7 +17,7 @@ namespace PlayniteUpdateStatus.Launchers.Steam
         private readonly Action<string,bool> log;
         private bool dirty;
         private DateTime retryAfter;
-        private DateTime lastReceived;
+        private DateTime lastReceived, clearedUtc;
         public SteamCoverHistory(string path, Action<string,bool> log)
         {
             this.path = path; this.log = log;
@@ -45,12 +45,28 @@ namespace PlayniteUpdateStatus.Launchers.Steam
         // Display snapshots need membership only. Copy under the existing lock
         // without sorting or exposing the mutable set to the UI thread.
         internal void CopyPendingTo(HashSet<uint> target) { lock (gate) target.UnionWith(pending); }
+        public void Clear()
+        {
+            lock (gate)
+            {
+                pending.Clear();
+                dirty = false;
+                retryAfter = DateTime.MinValue;
+                // Ignore a live callback captured before removal.
+                clearedUtc = DateTime.UtcNow;
+                lastReceived = DateTime.MinValue;
+                if (string.IsNullOrEmpty(path)) return;
+                try { File.Delete(path); }
+                catch (IOException) { log("Removed Steam history could not be deleted", true); }
+                catch (UnauthorizedAccessException) { log("Removed Steam history could not be deleted", true); }
+            }
+        }
         public void Observe(SteamCatalogSnapshot catalog)
         {
             if (catalog == null || !catalog.Fresh) return;
             lock (gate)
             {
-                if (catalog.ReceivedUtc < lastReceived) return;
+                if (catalog.ReceivedUtc < lastReceived || catalog.ReceivedUtc <= clearedUtc) return;
                 lastReceived = catalog.ReceivedUtc;
                 foreach (var entry in catalog.Entries)
                 {

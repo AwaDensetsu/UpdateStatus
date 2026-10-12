@@ -1,69 +1,50 @@
 <UserControl x:Class="PlayniteUpdateStatus.UI.SettingsView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="clr-namespace:PlayniteUpdateStatus.UI"
     xmlns:core="clr-namespace:PlayniteUpdateStatus.Core">
-    <UserControl.Resources>
-        <BooleanToVisibilityConverter x:Key="AccessButtonVisibility" />
-    </UserControl.Resources>
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel x:Name="SettingsPanel" Margin="16">
-            <CheckBox Margin="0,8,0,0" Content="Enable plugin" IsChecked="{Binding Settings.Enabled, Mode=TwoWay}" />
-            <TextBlock x:Name="SteamFolderHelp" Margin="0,12,0,4" TextWrapping="Wrap"
-                Text="Select the Steam installation folder, e.g. C:\Program Files (x86)\Steam." />
-            <DockPanel Width="500" MaxWidth="{Binding ActualWidth, ElementName=SettingsPanel}" HorizontalAlignment="Left">
-                <Button Content="Browse…" DockPanel.Dock="Right" Margin="8,0,0,0" Padding="12,3,12,3" Click="BrowseClick" />
-                <TextBox x:Name="SteamFolderInput" Text="{Binding FolderInput, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-            </DockPanel>
-            <TextBlock x:Name="SteamFolderStatus" Text="{Binding FolderStatus}" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,4,0,8" />
-            <Border x:Name="SteamConnectionPanel" Width="500"
-                MaxWidth="{Binding ActualWidth, ElementName=SettingsPanel}" HorizontalAlignment="Left"
-                Margin="0,8,0,0" Padding="14,12" CornerRadius="6" BorderThickness="1" BorderBrush="#406F7F94">
-                <StackPanel>
-                    <TextBlock Text="Steam connection" FontWeight="SemiBold" Margin="0,0,0,6" />
-                    <TextBlock Text="{Binding ConnectionStatus}" TextWrapping="Wrap" />
-                    <StackPanel Margin="0,10,0,0"
-                        Visibility="{Binding CanEnableAccess, Converter={StaticResource AccessButtonVisibility}}">
-                        <TextBlock TextWrapping="Wrap" Margin="0,0,0,8"
-                            Text="Connect once to enable live progress and download controls. Then close and reopen Steam." />
-                        <TextBlock TextWrapping="Wrap" Margin="0,0,0,10" Opacity="0.85"
-                            Text="Other programs on this PC can also use this connection. Access stays enabled until you disable it." />
-                        <Button x:Name="SteamConnectButton" Content="{Binding AccessButtonText}" IsEnabled="{Binding CanEnableAccess}"
-                            HorizontalAlignment="Left" Padding="12,5" Click="EnableAccessClick" />
+            <TabControl x:Name="LauncherSettingsTabs">
+                <TabItem Header="General">
+                    <StackPanel x:Name="GeneralSettingsPanel" Margin="16">
+                        <CheckBox Margin="0,8,0,0" Content="Enable plugin" IsChecked="{Binding Settings.Enabled, Mode=TwoWay}" />
+                        <TextBlock Text="Download speed units" Margin="0,12,0,4" />
+                        <ComboBox Width="260" HorizontalAlignment="Left" SelectedValuePath="Tag"
+                            SelectedValue="{Binding Settings.SpeedUnit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            <ComboBoxItem Content="Bytes/s — KB/s, MB/s" Tag="{x:Static core:SpeedUnit.BytesPerSecond}" />
+                            <ComboBoxItem Content="Bits/s — kbps, Mbps" Tag="{x:Static core:SpeedUnit.BitsPerSecond}" />
+                        </ComboBox>
+                        <CheckBox Margin="0,8,0,0" Content="Show update status" IsChecked="{Binding Settings.AutomaticOverlay, Mode=TwoWay}" />
+                        <CheckBox Margin="0,8,0,0" Content="Show update indicators on covers and lists" IsChecked="{Binding Settings.CoverBadges, Mode=TwoWay}" />
                     </StackPanel>
-                    <Expander x:Name="SteamConnectionDetails" Header="More information" IsExpanded="False" Margin="0,10,0,0"
-                        Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=UserControl}}">
-                        <StackPanel Margin="0,8,0,0">
-                            <TextBlock TextWrapping="Wrap" Margin="0,0,0,10"
-                                Text="This connection uses Steam UI debugging to read update progress and manage downloads. Other local programs can also inspect and control the Steam UI through this interface." />
-                            <TextBlock TextWrapping="Wrap" Margin="0,0,0,10"
-                                Text="Windows may ask for administrator permission during setup. The plugin does not ask for your Steam password or an API key, and you restart Steam yourself." />
-                            <TextBlock TextWrapping="Wrap">
-                                <Run FontWeight="SemiBold" Text="To disable the connection" /><LineBreak />
-                                <Run Text="Remove .cef-enable-remote-debugging from the Steam folder, then restart Steam. Access remains enabled after Playnite closes until you do this." />
-                            </TextBlock>
-                        </StackPanel>
-                    </Expander>
-                </StackPanel>
-            </Border>
-            <TextBlock Text="Polling interval (500–2000 ms)" Margin="0,12,0,4" />
-            <TextBox Width="130" HorizontalAlignment="Left"
-                Text="{Binding Settings.PollingInterval, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnExceptions=True}" />
-            <TextBlock Text="Download speed units" Margin="0,12,0,4" />
-            <ComboBox Width="260" HorizontalAlignment="Left" SelectedValuePath="Tag"
-                SelectedValue="{Binding Settings.SpeedUnit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
-                <ComboBoxItem Content="Bytes/s — KB/s, MB/s" Tag="{x:Static core:SpeedUnit.BytesPerSecond}" />
-                <ComboBoxItem Content="Bits/s — kbps, Mbps" Tag="{x:Static core:SpeedUnit.BitsPerSecond}" />
-            </ComboBox>
-            <TextBlock Text="When Playnite closes" Margin="0,12,0,4" />
-            <ComboBox x:Name="ExitActionInput" Width="260" HorizontalAlignment="Left" SelectedValuePath="Tag"
-                SelectedValue="{Binding Settings.ExitAction, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
-                <ComboBoxItem Content="Keep current state" Tag="{x:Static core:ExitDownloadAction.KeepCurrentState}" />
-                <ComboBoxItem Content="Pause and keep in queue" Tag="{x:Static core:ExitDownloadAction.PauseAndKeepInQueue}" />
-                <ComboBoxItem Content="Pause and remove from queue" Tag="{x:Static core:ExitDownloadAction.PauseAndRemoveFromQueue}" />
-            </ComboBox>
-            <CheckBox Margin="0,8,0,0" Content="Show update status" IsChecked="{Binding Settings.AutomaticOverlay, Mode=TwoWay}" />
-            <CheckBox Margin="0,8,0,0" Content="Show update indicators on covers and lists" IsChecked="{Binding Settings.CoverBadges, Mode=TwoWay}" />
-            <CheckBox Margin="0,8,0,0" Content="Restore Playnite if Steam takes focus during an update" IsChecked="{Binding Settings.KeepFrontendVisible, Mode=TwoWay}" />
+                </TabItem>
+                <TabItem Header="Steam">
+                    <StackPanel x:Name="SteamSettingsPanel" Margin="16">
+                        <ui:LauncherConnectionCard x:Name="SteamCardControl" Margin="0,8,0,0" Width="560"
+                            MaxWidth="{Binding ActualWidth, ElementName=SteamSettingsPanel}" HorizontalAlignment="Left"
+                            PollingInterval="{Binding Settings.PollingInterval, Mode=TwoWay}"
+                            FolderRequested="BrowseClick" SetupRequested="EnableAccessClick" RelaunchRequested="RestartSteamClick" RemoveRequested="RemoveSteamClick" />
+                        <TextBlock Text="When Playnite closes" Margin="0,12,0,4" />
+                        <ComboBox x:Name="ExitActionInput" Width="260" HorizontalAlignment="Left" SelectedValuePath="Tag"
+                            SelectedValue="{Binding Settings.ExitAction, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            <ComboBoxItem Content="Keep current state" Tag="{x:Static core:ExitDownloadAction.KeepCurrentState}" />
+                            <ComboBoxItem Content="Pause and keep in queue" Tag="{x:Static core:ExitDownloadAction.PauseAndKeepInQueue}" />
+                            <ComboBoxItem Content="Pause and remove from queue" Tag="{x:Static core:ExitDownloadAction.PauseAndRemoveFromQueue}" />
+                        </ComboBox>
+                        <CheckBox Margin="0,8,0,0" Content="Restore Playnite if Steam takes focus during an update" IsChecked="{Binding Settings.KeepFrontendVisible, Mode=TwoWay}" />
+                    </StackPanel>
+                </TabItem>
+                <TabItem Header="Epic">
+                    <StackPanel x:Name="EpicSettingsPanel" Margin="16">
+                        <CheckBox Content="Enable Epic observation (beta)" IsChecked="{Binding EpicObservationEnabled, Mode=TwoWay}" Margin="0,8,0,12" />
+                        <ui:LauncherConnectionCard x:Name="EpicCardControl" Width="560"
+                            MaxWidth="{Binding ActualWidth, ElementName=EpicSettingsPanel}" HorizontalAlignment="Left"
+                            PollingInterval="{Binding Settings.EpicPollingInterval, Mode=TwoWay}"
+                            FolderRequested="BrowseEpicClick" SetupRequested="ConnectEpicClick" RelaunchRequested="RestartEpicClick" RemoveRequested="RemoveEpicClick" />
+                    </StackPanel>
+                </TabItem>
+            </TabControl>
         </StackPanel>
     </ScrollViewer>
 </UserControl>
